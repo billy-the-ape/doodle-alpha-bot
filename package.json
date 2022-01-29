@@ -22,6 +22,7 @@
     "eslint": "^8.8.0",
     "eslint-config-prettier": "^8.3.0",
     "import-sort-style-module": "^6.0.0",
+    "nodemon": "^2.0.15",
     "prettier": "^2.5.1",
     "prettier-plugin-import-sort": "^0.0.7",
     "prettier-plugin-sort-json": "^0.0.2",

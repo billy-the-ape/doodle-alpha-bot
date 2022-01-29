@@ -22,7 +22,7 @@ export const Fcfs: Command = {
     },
     {
       type: Constants.ApplicationCommandOptionTypes.STRING,
-      name: 'discord-link',
+      name: 'discord-url',
       description: 'Link to project discord (optional)',
       required: false,
     },
@@ -37,23 +37,21 @@ export const Fcfs: Command = {
         return;
       }
 
-      const [
-        { value: userCountRaw },
-        { value: projectNameRaw },
-        { value: discordUrlRaw } = { value: '' },
-      ] = interaction.options.data;
+      const { value: userCountRaw } = interaction.options.get('wl-count', true);
+      const { value: projectNameRaw } = interaction.options.get('project', true);
+      const { value: discordUrlRaw } = interaction.options.get('discord-url') ?? { value: '' };
 
       const userCount = Number(userCountRaw);
       const projectName = String(projectNameRaw);
       const discordUrl = String(discordUrlRaw);
 
       const embed = new MessageEmbed({
-        title: `${projectName} Whitelist Opportunity! ${userCount} people FCFS`,
+        title: `**${projectName}** Whitelist opportunity: ${userCount} spots, FCFS`,
         author: { name: interaction.user.username },
         footer: { text: 'Good luck!' },
       }).setTimestamp();
 
-      interaction.editReply(`Collecting entries for ${projectName} WL (FCFS)`);
+      interaction.editReply(`Collecting entries for ${projectName} WL FCFS`);
 
       const message = await channel.send({ embeds: [embed] });
       const emoji = '🎉';

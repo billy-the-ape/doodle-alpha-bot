@@ -35,7 +35,7 @@ export const Raffle: Command = {
     },
     {
       type: Constants.ApplicationCommandOptionTypes.STRING,
-      name: 'discord-link',
+      name: 'discord-url',
       description: 'Link to project discord (optional)',
       required: false,
     },
@@ -49,19 +49,16 @@ export const Raffle: Command = {
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     try {
       const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
-
       if (!channel || !channel.isText) {
         interaction.editReply('An error occurred :(');
         return;
       }
 
-      const [
-        { value: userCountRaw },
-        { value: projectNameRaw },
-        { value: durationRaw } = { value: 1 },
-        { value: discordUrlRaw } = { value: '' },
-        { value: maxEntriesRaw } = { value: 0 },
-      ] = interaction.options.data;
+      const { value: userCountRaw } = interaction.options.get('wl-count', true);
+      const { value: projectNameRaw } = interaction.options.get('project', true);
+      const { value: discordUrlRaw } = interaction.options.get('discord-url') ?? { value: '' };
+      const { value: durationRaw } = interaction.options.get('duration-hrs') ?? { value: 1 };
+      const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? { value: 0 };
 
       const winnerCount = Number(userCountRaw);
       const projectName = String(projectNameRaw);
@@ -69,14 +66,21 @@ export const Raffle: Command = {
       const durationHrs = Number(durationRaw);
       const maxEntries = Number(maxEntriesRaw);
 
-      const embed = new MessageEmbed({
-        title: `${projectName} Whitelist Opportunity! ${winnerCount} Raffle!`,
-        author: { name: interaction.user.username },
-        description: ``,
-        footer: { text: 'Good luck!' },
-      }).setTimestamp();
+      const hrString = durationHrs === 1 ? 'hour' : 'hours';
+      const timeMessage = `- Ends in ${durationHrs} ${hrString}.`
+      const maxEntriesMessage = maxEntries > 0 ? `\n- Maximum ${maxEntries} entries.` : '';
+      const durationMs = durationHrs * 60 * 60 * 1000;
+      const endTime = new Date();
+      endTime.setTime(endTime.getTime() + durationMs);
 
-      interaction.editReply(`Collecting entries for ${projectName} WL (Raffle)`);
+      const embed = new MessageEmbed({
+        title: `**${projectName}** Whitelist opportunity: ${winnerCount} spots, raffle`,
+        author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
+        description: timeMessage + maxEntriesMessage,
+        footer: { text: 'Good luck! Ends' },
+      }).setTimestamp(endTime);
+
+      interaction.editReply(`Collecting entries for ${projectName} WL Raffle`);
 
       const message = await channel.send({ embeds: [embed] });
       const emoji = '🎉';
@@ -87,7 +91,7 @@ export const Raffle: Command = {
 
       const collector = message.createReactionCollector({
         filter: (reaction) => reaction.emoji.name === emoji,
-        time: durationHrs * 60 * 60 * 60,
+        time: durationMs,
         max: maxEntries ? 1 + maxEntries : undefined,
       });
 
@@ -98,6 +102,8 @@ export const Raffle: Command = {
           !entries.find(({ id }) => id === user.id)
         ) {
           entries.push(user);
+
+          console.log(entries.length + ' ' + maxEntries)
 
           if (entries.length === maxEntries) {
             const winners = selectWinners({ winnerCount, entries });
