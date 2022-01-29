@@ -30,14 +30,14 @@ export const notifyWinners = ({
   const winnersMessage = winners.reduce((
     acc,
     { username, discriminator },
-  ) => `${acc}\n${username}#${discriminator}`, '===== WINNERS =====');
+  ) => `${acc}\n${username}#${discriminator}`, '**===== WINNERS =====**');
 
   const publicWinnersMessage = winners.reduce((
     acc,
-    { username, discriminator },
-  ) => `${acc}\n${username}#${discriminator}`, '🏆 Winners:');
+    user,
+  ) => `${acc}\n${user.toString()}`, '🏆 Winners:');
 
-  interaction.editReply(`${projectName} FCFS drop complete!\n\n${winnersMessage}`);
+  interaction.editReply(`**${projectName}**\n${winnersMessage}`);
 
   const embed2 = new MessageEmbed({
     title: `${projectName} WL Completed`,

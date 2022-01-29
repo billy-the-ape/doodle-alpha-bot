@@ -47,7 +47,7 @@ export const Fcfs: Command = {
 
       const embed = new MessageEmbed({
         title: `**${projectName}** Whitelist opportunity: ${userCount} spots, FCFS`,
-        author: { name: interaction.user.username },
+        author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
         footer: { text: 'Good luck!' },
       }).setTimestamp();
 
