@@ -30,7 +30,7 @@ export const notifyWinners = ({
   const winnersMessage = winners.reduce((
     acc,
     { username, discriminator },
-  ) => `${acc}\n${username}#${discriminator}`, '🏆 Winners:');
+  ) => `${acc}\n${username}#${discriminator}`, '===== WINNERS =====');
 
   const publicWinnersMessage = winners.reduce((
     acc,
