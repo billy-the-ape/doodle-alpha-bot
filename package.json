@@ -6,8 +6,9 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "start": "ts-node src/bot.ts",
-    "dev": "nodemon src/bot.ts"
+    "start": "node dist/bot.js",
+    "dev": "nodemon src/bot.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "@types/dotenv-flow": "^3.2.0",
