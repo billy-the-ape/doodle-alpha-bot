@@ -50,6 +50,7 @@ export const Raffle: Command = {
     try {
       const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
       if (!channel || !channel.isText) {
+        console.error('ERROR: No channel found ' + interaction.channelId);
         interaction.editReply('An error occurred :(');
         return;
       }
@@ -136,7 +137,8 @@ export const Raffle: Command = {
         const index = entries.findIndex(({ id }) => id === user.id);
         entries.splice(index, 1);
       });
-    } catch {
+    } catch (e) {
+      console.error('Error: ', e);
       interaction.editReply(`An error occurred :(`);
     }
   }

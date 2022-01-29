@@ -33,6 +33,7 @@ export const Fcfs: Command = {
       const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
 
       if (!channel || !channel.isText) {
+        console.error('No channel found ' + interaction.channelId);
         interaction.editReply('An error occurred :(');
         return;
       }
@@ -89,7 +90,8 @@ export const Fcfs: Command = {
         winners.splice(index, 1);
       });
 
-    } catch {
+    } catch (e: any) {
+      console.error('Error: ', e);
       interaction.editReply(`An error occurred :(`);
     }
   }
