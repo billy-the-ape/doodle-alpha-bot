@@ -10,14 +10,14 @@
     "dev": "nodemon src/bot.ts"
   },
   "dependencies": {
+    "@types/dotenv-flow": "^3.2.0",
+    "@types/node": "^17.0.13",
     "@discordjs/builders": "^0.12.0",
     "discord.js": "^13.6.0",
     "dotenv-flow": "^3.2.0",
     "ts-node": "^10.4.0"
   },
   "devDependencies": {
-    "@types/dotenv-flow": "^3.2.0",
-    "@types/node": "^17.0.13",
     "@typescript-eslint/eslint-plugin": "^5.10.1",
     "@typescript-eslint/parser": "^5.10.1",
     "eslint": "^8.8.0",
