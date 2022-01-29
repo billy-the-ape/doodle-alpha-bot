@@ -30,19 +30,19 @@ export const Raffle: Command = {
     {
       type: Constants.ApplicationCommandOptionTypes.NUMBER,
       name: 'duration-hrs',
-      description: 'Duration (in hours) for raffle. Default 1.',
+      description: 'Duration (in hours) for raffle. Optional, default 1 hr.',
       required: false,
     },
     {
       type: Constants.ApplicationCommandOptionTypes.STRING,
-      name: 'discord-url',
-      description: 'Link to project discord (optional)',
+      name: 'discord-link',
+      description: 'Link to project discord, optional.',
       required: false,
     },
     {
       type: Constants.ApplicationCommandOptionTypes.INTEGER,
       name: 'max-entries',
-      description: 'Max number of entries for the raffle. Enter zero for infinite.',
+      description: 'Max number of entries for the raffle, optional.',
       required: false,
     },
   ],
@@ -56,7 +56,7 @@ export const Raffle: Command = {
 
       const { value: userCountRaw } = interaction.options.get('wl-count', true);
       const { value: projectNameRaw } = interaction.options.get('project', true);
-      const { value: discordUrlRaw } = interaction.options.get('discord-url') ?? { value: '' };
+      const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? { value: '' };
       const { value: durationRaw } = interaction.options.get('duration-hrs') ?? { value: 1 };
       const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? { value: 0 };
 
@@ -74,7 +74,7 @@ export const Raffle: Command = {
       endTime.setTime(endTime.getTime() + durationMs);
 
       const embed = new MessageEmbed({
-        title: `**${projectName}** Whitelist opportunity: ${winnerCount} spots, raffle`,
+        title: `**${projectName}** whitelist opportunity: ${winnerCount} spots, raffle`,
         author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
         description: timeMessage + maxEntriesMessage,
         footer: { text: 'Good luck! Ends' },

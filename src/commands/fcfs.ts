@@ -22,8 +22,8 @@ export const Fcfs: Command = {
     },
     {
       type: Constants.ApplicationCommandOptionTypes.STRING,
-      name: 'discord-url',
-      description: 'Link to project discord (optional)',
+      name: 'discord-link',
+      description: 'Link to project discord, optional.',
       required: false,
     },
     
@@ -39,17 +39,17 @@ export const Fcfs: Command = {
 
       const { value: userCountRaw } = interaction.options.get('wl-count', true);
       const { value: projectNameRaw } = interaction.options.get('project', true);
-      const { value: discordUrlRaw } = interaction.options.get('discord-url') ?? { value: '' };
+      const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? { value: '' };
 
       const userCount = Number(userCountRaw);
       const projectName = String(projectNameRaw);
       const discordUrl = String(discordUrlRaw);
 
       const embed = new MessageEmbed({
-        title: `**${projectName}** Whitelist opportunity: ${userCount} spots, FCFS`,
+        title: `**${projectName}** whitelist opportunity: ${userCount} spots, FCFS`,
         author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
         footer: { text: 'Good luck!' },
-      }).setTimestamp();
+      });
 
       interaction.editReply(`Collecting entries for ${projectName} WL FCFS`);
 

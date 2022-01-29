@@ -26,25 +26,28 @@ export const notifyWinners = ({
   projectName,
   channel,
 }: NotifyWinnersProps) => {
-  const discordMessage = discordUrl ? `**Join discord: ${discordUrl}\n\n**` : '';
+  const discordMessage = discordUrl ? `\n\n**Join discord: ${discordUrl}**` : '';
+
+  // Message for creator of WL to easily copy all the discord names with #
   const winnersMessage = winners.reduce((
     acc,
     { username, discriminator },
-  ) => `${acc}\n${username}#${discriminator}`, '**===== WINNERS =====**');
+  ) => `${acc}\n${username}#${discriminator}`, `\n**===== ${projectName} WINNERS =====**`);
 
+  // Message to ping users
   const publicWinnersMessage = winners.reduce((
     acc,
     user,
-  ) => `${acc}\n${user.toString()}`, '🏆 Winners:');
+  ) => `${acc} ${user.toString()}`, '\n🏆 Winners:');
 
-  interaction.editReply(`**${projectName}**\n${winnersMessage}`);
+  interaction.editReply(winnersMessage);
 
   const embed2 = new MessageEmbed({
-    title: `${projectName} WL Completed`,
-    description: discordMessage + publicWinnersMessage,
+    title: `${projectName} whitelist completed`,
+    description: publicWinnersMessage + discordMessage,
     author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
     footer: { text: 'Congratulations winners!' },
-  }).setTimestamp();
+  });
 
   channel.send({ embeds: [embed2] });
 }
