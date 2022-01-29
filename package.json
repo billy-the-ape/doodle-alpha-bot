@@ -2,7 +2,7 @@
   "name": "doodle-alpha-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/bot.js",
   "author": "",
   "license": "ISC",
   "scripts": {
