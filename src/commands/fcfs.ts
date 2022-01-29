@@ -67,7 +67,11 @@ export const Fcfs: Command = {
       });
 
       collector.on('collect', (_, user) => {
-        if (user.id !== message.author.id && winners.length < userCount) {
+        if (
+          user.id !== message.author.id &&
+          winners.length < userCount &&
+          !winners.find(({ id }) => id === user.id)
+        ) {
           winners.push(user);
 
           if (winners.length === userCount) {
@@ -81,6 +85,12 @@ export const Fcfs: Command = {
           }
         }
       });
+
+      collector.on('remove', (_, user) => {
+        const index = winners.findIndex(({ id }) => id === user.id);
+        winners.splice(index, 1);
+      });
+
     } catch {
       interaction.editReply(`An error occurred :(`);
     }

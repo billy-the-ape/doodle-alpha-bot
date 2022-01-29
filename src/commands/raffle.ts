@@ -92,7 +92,11 @@ export const Raffle: Command = {
       });
 
       collector.on('collect', (_, user) => {
-        if (user.id !== message.author.id && entries.length < maxEntries) {
+        if (
+          user.id !== message.author.id &&
+          (maxEntries < 1 || entries.length < maxEntries) &&
+          !entries.find(({ id }) => id === user.id)
+        ) {
           entries.push(user);
 
           if (entries.length === maxEntries) {
@@ -120,6 +124,11 @@ export const Raffle: Command = {
             channel,
           });
         }
+      });
+
+      collector.on('remove', (_, user) => {
+        const index = entries.findIndex(({ id }) => id === user.id);
+        entries.splice(index, 1);
       });
     } catch {
       interaction.editReply(`An error occurred :(`);

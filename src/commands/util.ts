@@ -55,6 +55,10 @@ export const selectWinners = ({
 }: SelectWinnersProps) => {
   const selectedIndexes: number[] = [];
 
+  if (winnerCount >= entries.length) {
+    return entries;
+  }
+
   while(selectedIndexes.length < winnerCount) {
     const random = Math.floor(Math.random() * entries.length);
   
