@@ -56,19 +56,18 @@ export const selectWinners = ({
   winnerCount,
   entries
 }: SelectWinnersProps) => {
-  const selectedIndexes: number[] = [];
-
   if (winnerCount >= entries.length) {
     return entries;
   }
 
-  while(selectedIndexes.length < winnerCount) {
-    const random = Math.floor(Math.random() * entries.length);
+  const arr = [...entries];
+  const result: User[] = [];
+
+  while(result.length < winnerCount) {
+    const random = Math.floor(Math.random() * arr.length);
   
-    if (!selectedIndexes.includes(random)) {
-      selectedIndexes.push(random);
-    }
+    result.push(...arr.splice(random, 1));
   }
 
-  return selectedIndexes.map((i) => entries[i]);
+  return result;
 };
