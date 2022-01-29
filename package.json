@@ -11,8 +11,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "discord.js": "^13.6.0",
-    "dotenv-flow": "^3.2.0"
+    "discord.js": "12.2.0",
+    "dotenv-flow": "3.2.0"
   },
   "devDependencies": {
     "@types/dotenv-flow": "^3.2.0",
