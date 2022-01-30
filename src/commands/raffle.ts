@@ -7,7 +7,7 @@ import {
   User,
 } from "discord.js";
 import { Command } from "../types";
-import { notifyWinners, selectWinners } from "./util";
+import { createEmbed, notifyWinners, selectWinners } from "./util";
 
 export const Raffle: Command = {
   name: "wl-raffle",
@@ -74,12 +74,15 @@ export const Raffle: Command = {
       const endTime = new Date();
       endTime.setTime(endTime.getTime() + durationMs);
 
-      const embed = new MessageEmbed({
-        title: `**${projectName}** whitelist opportunity: ${winnerCount} spots, raffle`,
-        author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
+      const embed = createEmbed({
+        projectName,
+        winnerCount,
+        dropType: 'raffle',
+        user: interaction.user,
         description: timeMessage + maxEntriesMessage,
-        footer: { text: 'Good luck! Ends' },
-      }).setTimestamp(endTime);
+        footerText: 'Good luck! Ends',
+        timeStamp: endTime,
+      });
 
       interaction.editReply(`Collecting entries for ${projectName} WL Raffle`);
 
@@ -93,7 +96,7 @@ export const Raffle: Command = {
       const collector = message.createReactionCollector({
         filter: (reaction) => reaction.emoji.name === emoji,
         time: durationMs,
-        max: maxEntries ? 1 + maxEntries : undefined,
+        max: maxEntries > 0 ? 1 + maxEntries : undefined,
       });
 
       collector.on('collect', (_, user) => {
@@ -104,8 +107,6 @@ export const Raffle: Command = {
         ) {
           entries.push(user);
 
-          console.log(entries.length + ' ' + maxEntries)
-
           if (entries.length === maxEntries) {
             const winners = selectWinners({ winnerCount, entries });
             notifyWinners({
@@ -113,7 +114,7 @@ export const Raffle: Command = {
               winners,
               interaction,
               projectName,
-              channel,
+              message,
             });
             complete = true;
           }
@@ -128,7 +129,7 @@ export const Raffle: Command = {
             winners,
             interaction,
             projectName,
-            channel,
+            message,
           });
         }
       });

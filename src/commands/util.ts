@@ -4,14 +4,15 @@ import {
   CacheType,
   TextBasedChannel,
   MessageEmbed,
+  Message,
 } from 'discord.js';
 
 type NotifyWinnersProps = {
+  message: Message<boolean>;
   discordUrl: string;
   winners: User[];
   interaction: BaseCommandInteraction<CacheType>,
   projectName: string;
-  channel: TextBasedChannel;
 }
 
 type SelectWinnersProps = {
@@ -19,12 +20,22 @@ type SelectWinnersProps = {
   entries: User[];
 }
 
+type CreateEmbedProps = {
+  winnerCount: number | string;
+  dropType: string;
+  projectName: string;
+  user: User;
+  footerText: string;
+  description?: string;
+  timeStamp?: Date;
+}
+
 export const notifyWinners = ({
+  message,
   discordUrl,
   winners,
   interaction,
   projectName,
-  channel,
 }: NotifyWinnersProps) => {
   const discordMessage = discordUrl ? `\n\n**Join discord: ${discordUrl}**` : '';
 
@@ -38,18 +49,11 @@ export const notifyWinners = ({
   const publicWinnersMessage = winners.reduce((
     acc,
     user,
-  ) => `${acc} ${user.toString()}`, '\n🏆 Winners:');
+  ) => `${acc} ${user.toString()}`, '\n🏆 Winners:\n');
 
   interaction.editReply(winnersMessage);
 
-  const embed2 = new MessageEmbed({
-    title: `${projectName} whitelist completed`,
-    description: publicWinnersMessage + discordMessage,
-    author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
-    footer: { text: 'Congratulations winners!' },
-  });
-
-  channel.send({ embeds: [embed2] });
+  message.reply(`**${projectName} whitelist completed**\n${publicWinnersMessage + discordMessage}\n\n_Congratulations!_`)
 }
 
 export const selectWinners = ({
@@ -71,3 +75,18 @@ export const selectWinners = ({
 
   return result;
 };
+
+export const createEmbed = ({
+  winnerCount,
+  dropType,
+  projectName,
+  user,
+  description,
+  timeStamp,
+  footerText,
+}: CreateEmbedProps) => new MessageEmbed({
+  title: `__${projectName}__ whitelist opportunity: ${winnerCount} spots, ${dropType}`,
+  author: { name: user.username, iconURL: user.displayAvatarURL() },
+  description,
+  footer: { text: footerText },
+}).setTimestamp(timeStamp);

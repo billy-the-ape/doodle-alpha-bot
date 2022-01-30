@@ -1,6 +1,6 @@
 import { Constants, BaseCommandInteraction, Client, MessageEmbed, TextBasedChannel, User } from "discord.js";
 import { Command } from "../types";
-import { notifyWinners } from "./util";
+import { createEmbed, notifyWinners } from "./util";
 
 export const Fcfs: Command = {
   name: "wl-fcfs",
@@ -46,10 +46,12 @@ export const Fcfs: Command = {
       const projectName = String(projectNameRaw);
       const discordUrl = String(discordUrlRaw);
 
-      const embed = new MessageEmbed({
-        title: `**${projectName}** whitelist opportunity: ${userCount} spots, FCFS`,
-        author: { name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() },
-        footer: { text: 'Good luck!' },
+      const embed = createEmbed({
+        projectName,
+        winnerCount: userCount,
+        dropType: 'raffle',
+        user: interaction.user,
+        footerText: 'Good luck!',
       });
 
       interaction.editReply(`Collecting entries for ${projectName} WL FCFS`);
@@ -63,6 +65,7 @@ export const Fcfs: Command = {
       const collector = message.createReactionCollector({
         filter: (reaction) => reaction.emoji.name === emoji,
         max: 1 + userCount,
+        time: 86400000, // 24 hours force end
       });
 
       collector.on('collect', (_, user) => {
@@ -79,7 +82,7 @@ export const Fcfs: Command = {
               winners,
               interaction,
               projectName,
-              channel,
+              message,
             });
           }
         }
