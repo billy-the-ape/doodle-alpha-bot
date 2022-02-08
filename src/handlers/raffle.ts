@@ -31,7 +31,7 @@ export const run = async (
 
     const timeMessage = `Ends <t:${Math.floor(timeStamp.getTime() / 1000)}:R>`;
     const maxEntriesMessage =
-      maxEntries > 0 ? `\nMaximum ${maxEntries} entries.` : '';
+      maxEntries > 0 ? `\nMaximum **${maxEntries}** entries.` : '';
 
     const embed = createEmbed({
       projectName,
@@ -51,7 +51,6 @@ export const run = async (
       embed,
       client,
       interaction,
-      winnerCount,
       maxEntries,
       durationMs,
       emoji,

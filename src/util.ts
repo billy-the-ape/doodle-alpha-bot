@@ -42,7 +42,6 @@ export type HandleMessageReactionsProps = {
   dropType: string;
   client: Client;
   emoji: string;
-  winnerCount: number;
   maxEntries: number;
 
   // Optional
@@ -171,7 +170,6 @@ export const handleMessageReactions = async ({
   projectName,
   dropType,
   client,
-  winnerCount,
   maxEntries,
   durationMs = 86400000,
   onCollect,

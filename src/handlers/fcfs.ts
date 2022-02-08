@@ -34,7 +34,6 @@ export const run = async (
       embed,
       client,
       interaction,
-      winnerCount,
       maxEntries: winnerCount,
       emoji,
       onCollect: async (user, winners, message) => {
