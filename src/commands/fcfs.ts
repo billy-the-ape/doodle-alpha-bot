@@ -1,6 +1,6 @@
 import { Constants, BaseCommandInteraction, Client, MessageEmbed, TextBasedChannel, User } from "discord.js";
 import { Command } from "../types";
-import { createEmbed, notifyWinners } from "./util";
+import { createEmbed, handleMessageReactions, notifyWinners } from "./util";
 
 export const Fcfs: Command = {
   name: "wl-fcfs",
@@ -30,21 +30,13 @@ export const Fcfs: Command = {
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     try {
-      const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
-
-      if (!channel || !channel.isText) {
-        console.error('No channel found ' + interaction.channelId);
-        interaction.editReply('An error occurred :(');
-        return;
-      }
-
       const { value: userCountRaw } = interaction.options.get('wl-count', true);
       const { value: projectNameRaw } = interaction.options.get('project', true);
       const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? { value: '' };
 
       const userCount = Number(userCountRaw);
       const projectName = String(projectNameRaw);
-      const discordUrl = String(discordUrlRaw);
+      let discordUrl = String(discordUrlRaw);
       const dropType = 'FCFS';
 
       const embed = createEmbed({
@@ -55,48 +47,38 @@ export const Fcfs: Command = {
         footerText: 'Good luck!',
       });
 
-      interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
 
-      const message = await channel.send({ embeds: [embed] });
-      const emoji = '🎉';
-      const winners: User[] = [];
-
-      await message.react(emoji);
-
-      const collector = message.createReactionCollector({
-        filter: (reaction) => reaction.emoji.name === emoji,
-        max: 1 + userCount,
-        time: 86400000, // 24 hours force end
-      });
-
-      collector.on('collect', (_, user) => {
-        if (
-          user.id !== message.author.id &&
-          winners.length < userCount &&
-          !winners.find(({ id }) => id === user.id)
-        ) {
-          winners.push(user);
-
-          if (winners.length === userCount) {
-            notifyWinners({
-              discordUrl,
-              winners,
-              interaction,
-              projectName,
-              message,
-            });
+      await handleMessageReactions({
+        projectName,
+        dropType,
+        embed,
+        client,
+        interaction,
+        winnerCount: userCount,
+        onCollect: (_, user, winners, message) => {
+          if (
+            user.id !== message.author.id &&
+            winners.length < userCount &&
+            !winners.find(({ id }) => id === user.id)
+          ) {
+            winners.push(user);
+      
+            if (winners.length === userCount) {
+              notifyWinners({
+                discordUrl,
+                winners,
+                interaction,
+                projectName,
+                message,
+              });
+            }
           }
-        }
-      });
-
-      collector.on('remove', (_, user) => {
-        const index = winners.findIndex(({ id }) => id === user.id);
-        winners.splice(index, 1);
+        },
       });
 
     } catch (e: any) {
       console.error('Error: ', e);
-      interaction.editReply(`An error occurred :(`);
+      interaction.editReply(`An unexpected error occurred: ${e.message}`);
     }
   }
 };

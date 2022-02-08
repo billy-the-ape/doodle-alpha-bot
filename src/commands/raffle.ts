@@ -7,7 +7,7 @@ import {
   User,
 } from "discord.js";
 import { Command } from "../types";
-import { createEmbed, notifyWinners, selectWinners } from "./util";
+import { createEmbed, handleMessageReactions, notifyWinners, selectWinners } from "./util";
 
 export const Raffle: Command = {
   name: "wl-raffle",
@@ -49,9 +49,10 @@ export const Raffle: Command = {
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     try {
       const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
+
       if (!channel || !channel.isText) {
-        console.error('ERROR: No channel found ' + interaction.channelId);
-        interaction.editReply('An error occurred :(');
+        console.error('No channel found ' + interaction.channelId);
+        interaction.editReply('An error occurred, invalid channel.');
         return;
       }
 
@@ -85,31 +86,39 @@ export const Raffle: Command = {
         footerText: 'Good luck! Ends',
         timeStamp: endTime,
       });
-
-      interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
-
-      const message = await channel.send({ embeds: [embed] });
-      const emoji = '🎉';
-      const entries: User[] = [];
       let complete = false;
 
-      await message.react(emoji);
-
-      const collector = message.createReactionCollector({
-        filter: (reaction) => reaction.emoji.name === emoji,
-        time: durationMs,
-        max: maxEntries > 0 ? 1 + maxEntries : undefined,
-      });
-
-      collector.on('collect', (_, user) => {
-        if (
-          user.id !== message.author.id &&
-          (maxEntries < 1 || entries.length < maxEntries) &&
-          !entries.find(({ id }) => id === user.id)
-        ) {
-          entries.push(user);
-
-          if (entries.length === maxEntries) {
+      await handleMessageReactions({
+        projectName,
+        dropType,
+        embed,
+        client,
+        interaction,
+        winnerCount,
+        maxEntries,
+        onCollect: (_, user, entries, message) => {
+          if (
+            user.id !== message.author.id &&
+            (maxEntries < 1 || entries.length < maxEntries) &&
+            !entries.find(({ id }) => id === user.id)
+          ) {
+            entries.push(user);
+  
+            if (entries.length === maxEntries) {
+              const winners = selectWinners({ winnerCount, entries });
+              notifyWinners({
+                discordUrl,
+                winners,
+                interaction,
+                projectName,
+                message,
+              });
+              complete = true;
+            }
+          }
+        },
+        onEnd: (entries, message) => {
+          if (!complete) {
             const winners = selectWinners({ winnerCount, entries });
             notifyWinners({
               discordUrl,
@@ -118,31 +127,12 @@ export const Raffle: Command = {
               projectName,
               message,
             });
-            complete = true;
           }
         }
       });
-
-      collector.on('end', () => {
-        if (!complete) {
-          const winners = selectWinners({ winnerCount, entries });
-          notifyWinners({
-            discordUrl,
-            winners,
-            interaction,
-            projectName,
-            message,
-          });
-        }
-      });
-
-      collector.on('remove', (_, user) => {
-        const index = entries.findIndex(({ id }) => id === user.id);
-        entries.splice(index, 1);
-      });
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error: ', e);
-      interaction.editReply(`An error occurred :(`);
+      interaction.editReply(`An unexpected error occurred: ${e.message}`);
     }
   }
 };
