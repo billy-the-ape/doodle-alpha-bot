@@ -97,14 +97,20 @@ export const notifyWinners = async ({
   );
   winnerReply.suppressEmbeds(true);
 
-  const newEmbed = message.embeds[0];
-  newEmbed.description = `Ended <t:${Math.round(Date.now() / 1000)}>`;
+  message.embeds[0]
+    .setDescription(`Ended <t:${Math.round(Date.now() / 1000)}>`)
+    .setFooter({
+      text: 'Ended',
+    });
 
   message.edit({
-    embeds: [newEmbed],
+    embeds: [message.embeds[0]],
   });
 
   if (sendDm) {
+    await interaction.editReply(
+      `${projectName}: ${winners.length} winners selected`
+    );
     try {
       const dm = await interaction.user.createDM(true);
       await dm.send(winnersMessage);
@@ -173,7 +179,6 @@ export const handleMessageReactions = async ({
     interaction.editReply('An error occurred, invalid channel.');
     return false;
   }
-  interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
 
   const message = await channel.send({ embeds: [embed] });
   const cancelEmoji = '❌';
@@ -222,6 +227,8 @@ export const handleMessageReactions = async ({
     entries.splice(index, 1);
   });
 
+  interaction.editReply(`${projectName}: ${dropType} WL drop created.`);
+
   return true;
 };
 
@@ -250,7 +257,7 @@ export const setStatusOngoing = (client: Client) =>
     status: wlCount <= 0 ? 'idle' : 'online',
     activities: [
       {
-        name: `${wlCount} WL opportunit${wlCount > 1 ? 'ies' : 'y'}`,
+        name: `${wlCount} WL opportunit${wlCount === 1 ? 'y' : 'ies'}`,
         type: 'WATCHING',
       },
     ],
