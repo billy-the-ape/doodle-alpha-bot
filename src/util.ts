@@ -28,6 +28,9 @@ export type CreateEmbedProps = {
   projectName: string;
   user: User;
   footerText: string;
+  emoji: string;
+
+  // Optional
   description?: string;
   timeStamp?: Date;
 };
@@ -38,10 +41,12 @@ export type HandleMessageReactionsProps = {
   projectName: string;
   dropType: string;
   client: Client;
+  emoji: string;
   winnerCount: number;
+
+  // Optional
   durationMs?: number;
   maxEntries?: number;
-  emoji?: string;
 
   // Event handlers
   onCollect: (
@@ -149,11 +154,14 @@ export const createEmbed = ({
   description,
   timeStamp,
   footerText,
+  emoji,
 }: CreateEmbedProps) =>
   new MessageEmbed({
-    title: `__${projectName}__ whitelist opportunity: ${winnerCount} spots, ${dropType}`,
+    title: `__${projectName}__ whitelist opportunity: ${winnerCount} spot${
+      winnerCount === 1 ? '' : 's'
+    }, ${dropType}`,
     author: { name: user.username, iconURL: user.displayAvatarURL() },
-    description,
+    description: `${description ?? ''}\n\n**React with ${emoji} to enter**`,
     footer: { text: footerText },
   }).setTimestamp(timeStamp);
 
@@ -168,7 +176,7 @@ export const handleMessageReactions = async ({
   durationMs = 86400000,
   onCollect,
   onEnd,
-  emoji = '🎉',
+  emoji,
 }: HandleMessageReactionsProps) => {
   const channel = (await client.channels.fetch(
     interaction.channelId
@@ -184,12 +192,26 @@ export const handleMessageReactions = async ({
   const cancelEmoji = '❌';
   const entries: User[] = [];
 
-  await message.react(emoji);
+  try {
+    await message.react(emoji);
+  } catch (e: any) {
+    if (e.message === 'Unknown Emoji') {
+      await message.delete();
+      interaction.editReply(
+        `**Invalid custom emoji - WL Cancelled**\n\nThe bot cannot use ${emoji} because it is probably from a server the bot is not in. To be safe, only use standard emojis or custome ones from the current server.`
+      );
+      return false;
+    } else {
+      throw e;
+    }
+  }
 
   maxEntries = maxEntries === 0 ? winnerCount : maxEntries ?? winnerCount;
 
   const collector = message.createReactionCollector({
-    filter: (reaction) => reaction.emoji.name === emoji,
+    filter: (reaction) =>
+      reaction.emoji.name === emoji ||
+      `<:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji, // Custom emoji
     max: 1 + maxEntries,
     time: durationMs,
   });
@@ -262,3 +284,31 @@ export const setStatusOngoing = (client: Client) =>
       },
     ],
   });
+
+export const getParameters = (interaction: BaseCommandInteraction) => {
+  const { value: userCountRaw } = interaction.options.get('wl-count', true);
+  const { value: projectNameRaw } = interaction.options.get('project', true);
+  const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? {
+    value: '',
+  };
+  const { value: durationRaw } = interaction.options.get('duration-hrs') ?? {
+    value: 1,
+  };
+  const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? {
+    value: 0,
+  };
+  const { value: emojiRaw } = interaction.options.get('emoji') ?? {
+    value: '🎉',
+  };
+
+  console.log({ emojiRaw });
+
+  return {
+    winnerCount: Number(userCountRaw),
+    projectName: String(projectNameRaw),
+    discordUrl: ensureDiscordUrl(String(discordUrlRaw)),
+    maxEntries: Number(maxEntriesRaw),
+    durationMs: Number(durationRaw) * 60 * 60 * 1000,
+    emoji: String(emojiRaw),
+  };
+};

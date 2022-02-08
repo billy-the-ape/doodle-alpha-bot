@@ -26,6 +26,12 @@ export const Fcfs: Command = {
       description: 'Link to project discord, optional.',
       required: false,
     },
+    {
+      type: Constants.ApplicationCommandOptionTypes.STRING,
+      name: 'emoji',
+      description: 'Emoji reaction to use for entries, optional.',
+      required: false,
+    },
   ],
   run,
 };

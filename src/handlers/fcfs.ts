@@ -2,7 +2,7 @@ import { BaseCommandInteraction, Client } from 'discord.js';
 import {
   addWl,
   createEmbed,
-  ensureDiscordUrl,
+  getParameters,
   handleMessageReactions,
   notifyWinners,
   subtractWl,
@@ -15,23 +15,17 @@ export const run = async (
   try {
     addWl(client);
 
-    const { value: userCountRaw } = interaction.options.get('wl-count', true);
-    const { value: projectNameRaw } = interaction.options.get('project', true);
-    const { value: discordUrlRaw } = interaction.options.get(
-      'discord-link'
-    ) ?? { value: '' };
-
     const dropType = 'FCFS';
-    const userCount = Number(userCountRaw);
-    const projectName = String(projectNameRaw);
-    const discordUrl = ensureDiscordUrl(String(discordUrlRaw));
+    const { winnerCount, projectName, discordUrl, emoji } =
+      getParameters(interaction);
 
     const embed = createEmbed({
       projectName,
       dropType,
-      winnerCount: userCount,
+      winnerCount,
       user: interaction.user,
       footerText: 'Good luck!',
+      emoji,
     });
 
     const success = await handleMessageReactions({
@@ -40,16 +34,17 @@ export const run = async (
       embed,
       client,
       interaction,
-      winnerCount: userCount,
+      winnerCount,
+      emoji,
       onCollect: async (user, winners, message) => {
         if (
           user.id !== message.author.id &&
-          winners.length < userCount &&
+          winners.length < winnerCount &&
           !winners.find(({ id }) => id === user.id)
         ) {
           winners.push(user);
 
-          if (winners.length === userCount) {
+          if (winners.length === winnerCount) {
             await notifyWinners({
               discordUrl,
               winners,

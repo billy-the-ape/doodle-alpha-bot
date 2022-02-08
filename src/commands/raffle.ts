@@ -38,6 +38,12 @@ export const Raffle: Command = {
       description: 'Max number of entries for the raffle, optional.',
       required: false,
     },
+    {
+      type: Constants.ApplicationCommandOptionTypes.STRING,
+      name: 'emoji',
+      description: 'Emoji reaction to use for entries, optional.',
+      required: false,
+    },
   ],
   run,
 };

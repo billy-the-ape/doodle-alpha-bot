@@ -2,7 +2,7 @@ import { BaseCommandInteraction, Client } from 'discord.js';
 import {
   addWl,
   createEmbed,
-  ensureDiscordUrl,
+  getParameters,
   handleMessageReactions,
   notifyWinners,
   selectWinners,
@@ -16,42 +16,32 @@ export const run = async (
   try {
     addWl(client);
 
-    const { value: userCountRaw } = interaction.options.get('wl-count', true);
-    const { value: projectNameRaw } = interaction.options.get('project', true);
-    const { value: discordUrlRaw } = interaction.options.get(
-      'discord-link'
-    ) ?? { value: '' };
-    const { value: durationRaw } = interaction.options.get('duration-hrs') ?? {
-      value: 1,
-    };
-    const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? {
-      value: 0,
-    };
+    const dropType = 'raffle';
+    const {
+      winnerCount,
+      projectName,
+      discordUrl,
+      maxEntries,
+      durationMs,
+      emoji,
+    } = getParameters(interaction);
 
-    const winnerCount = Number(userCountRaw);
-    const projectName = String(projectNameRaw);
-    const discordUrl = ensureDiscordUrl(String(discordUrlRaw));
-    const durationHrs = Number(durationRaw);
-    const maxEntries = Number(maxEntriesRaw);
-    const durationMs = durationHrs * 60 * 60 * 1000;
+    const timeStamp = new Date();
+    timeStamp.setTime(timeStamp.getTime() + durationMs);
 
-    const endTime = new Date();
-    endTime.setTime(endTime.getTime() + durationMs);
-
-    const timeMessage = `Ends <t:${Math.floor(endTime.getTime() / 1000)}:R>`;
+    const timeMessage = `Ends <t:${Math.floor(timeStamp.getTime() / 1000)}:R>`;
     const maxEntriesMessage =
       maxEntries > 0 ? `\nMaximum ${maxEntries} entries.` : '';
-
-    const dropType = 'raffle';
 
     const embed = createEmbed({
       projectName,
       winnerCount,
       dropType,
+      timeStamp,
+      emoji,
       user: interaction.user,
       description: timeMessage + maxEntriesMessage,
       footerText: 'Good luck! | Ends',
-      timeStamp: endTime,
     });
     let complete = false;
 
@@ -64,6 +54,7 @@ export const run = async (
       winnerCount,
       maxEntries,
       durationMs,
+      emoji,
       onCollect: async (user, entries, message) => {
         if (
           user.id !== message.author.id &&
