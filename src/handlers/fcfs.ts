@@ -35,6 +35,7 @@ export const run = async (
       client,
       interaction,
       winnerCount,
+      maxEntries: winnerCount,
       emoji,
       onCollect: async (user, winners, message) => {
         if (

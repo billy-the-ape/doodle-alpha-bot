@@ -43,10 +43,10 @@ export type HandleMessageReactionsProps = {
   client: Client;
   emoji: string;
   winnerCount: number;
+  maxEntries: number;
 
   // Optional
   durationMs?: number;
-  maxEntries?: number;
 
   // Event handlers
   onCollect: (
@@ -206,13 +206,11 @@ export const handleMessageReactions = async ({
     }
   }
 
-  maxEntries = maxEntries === 0 ? winnerCount : maxEntries ?? winnerCount;
-
   const collector = message.createReactionCollector({
     filter: (reaction) =>
       reaction.emoji.name === emoji ||
       `<:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji, // Custom emoji
-    max: 1 + maxEntries,
+    max: maxEntries === 0 ? undefined : 1 + maxEntries,
     time: durationMs,
   });
 
