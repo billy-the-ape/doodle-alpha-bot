@@ -6,23 +6,23 @@ import {
   MessageEmbed,
   Message,
   Client,
-  MessageReaction,
 } from 'discord.js';
 
-type NotifyWinnersProps = {
+export type NotifyWinnersProps = {
   message: Message<boolean>;
   discordUrl: string;
   winners: User[];
   interaction: BaseCommandInteraction<CacheType>,
   projectName: string;
+  sendDm?: boolean;
 }
 
-type SelectWinnersProps = {
+export type SelectWinnersProps = {
   winnerCount: number;
   entries: User[];
 }
 
-type CreateEmbedProps = {
+export type CreateEmbedProps = {
   winnerCount: number | string;
   dropType: string;
   projectName: string;
@@ -32,31 +32,59 @@ type CreateEmbedProps = {
   timeStamp?: Date;
 }
 
+export type HandleMessageReactionsProps = {
+  interaction: BaseCommandInteraction,
+  embed: MessageEmbed,
+  projectName: string,
+  dropType: string,
+  client: Client,
+  winnerCount: number,
+  maxEntries?: number,
+  emoji?: string,
+  onCollect: (user: User, entries: User[], message: Message<boolean>) => void | Promise<void>,
+  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>,
+};
+
+export const ensureDiscordUrl = (discordUrl: string) => {
+  if (discordUrl.startsWith('discord' || discordUrl.startsWith('www')))
+    return 'https://' + discordUrl;
+  else if (discordUrl.trim() !== '') 
+    return 'https://discord.gg/' + discordUrl;
+  return discordUrl;
+}
+
 export const notifyWinners = async ({
   message,
   discordUrl,
   winners,
   interaction,
   projectName,
+  sendDm = true,
 }: NotifyWinnersProps) => {
   const discordMessage = discordUrl ? `\n\n**Join discord: ${discordUrl}**` : '';
 
   // Message for creator of WL to easily copy all the discord names with #
-  const winnersMessage = winners.reduce((
+  const winnersMessage = winners.length === 0 ? 'None? 🥲' : winners.reduce((
     acc,
     { username, discriminator },
-  ) => `${acc}\n${username}#${discriminator}`, `\n**===== ${projectName} WINNERS =====**`);
+  ) => `${acc}\n${username}#${discriminator}`, `\n**===== ${projectName} WINNERS =====**`) + '\n**==========**';
 
   // Message to ping users
-  const publicWinnersMessage = winners.reduce((
+  const publicWinnersMessage = winners.length === 0 ? 'None? 🥲' : winners.reduce((
     acc,
     user,
   ) => `${acc} ${user.toString()}`, '\n🏆 Winners 🏆\n');
 
-  interaction.editReply(winnersMessage);
 
   const winnerReply = await message.reply(`**${projectName} whitelist completed**\n${publicWinnersMessage + discordMessage}\n\n🎉🎉 _Congratulations!_ 🎉🎉`)
   winnerReply.suppressEmbeds(true);
+
+  try {
+    const dm = await interaction.user.createDM(true);
+    await dm.send(winnersMessage);
+  } catch {
+    await interaction.editReply('Attempted to DM you winners, but I couldn\'t.\n' + winnersMessage);
+  }
 }
 
 export const selectWinners = ({
@@ -94,18 +122,6 @@ export const createEmbed = ({
   footer: { text: footerText },
 }).setTimestamp(timeStamp);
 
-export type HandleMessageReactionsProps = {
-  interaction: BaseCommandInteraction,
-  embed: MessageEmbed,
-  projectName: string,
-  dropType: string,
-  client: Client,
-  winnerCount: number,
-  maxEntries?: number,
-  emoji?: string,
-  onCollect: (user: User, entries: User[], message: Message<boolean>) => void | Promise<void>,
-  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>,
-};
 
 export const handleMessageReactions = async ({
   interaction,
@@ -135,7 +151,7 @@ export const handleMessageReactions = async ({
 
   await message.react(emoji);
 
-  maxEntries = maxEntries ?? winnerCount;
+  maxEntries = maxEntries === 0 ? winnerCount : maxEntries ?? winnerCount;
 
   const collector = message.createReactionCollector({
     filter: (reaction) => reaction.emoji.name === emoji,
