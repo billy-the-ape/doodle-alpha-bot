@@ -1,11 +1,11 @@
-import { Constants } from "discord.js";
-import { Command } from "../types";
+import { Constants } from 'discord.js';
 import { run } from '../handlers/raffle';
+import { Command } from '../types';
 
 export const Raffle: Command = {
-  name: "wl-raffle",
-  description: "Raffle reaction whitelist drop (50 max)",
-  type: "CHAT_INPUT",
+  name: 'wl-raffle',
+  description: 'Raffle reaction whitelist drop (50 max)',
+  type: 'CHAT_INPUT',
   options: [
     {
       type: Constants.ApplicationCommandOptionTypes.INTEGER,

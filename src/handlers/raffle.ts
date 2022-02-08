@@ -1,15 +1,32 @@
-import { BaseCommandInteraction, Client, TextBasedChannel } from "discord.js";
-import { addWl, createEmbed, ensureDiscordUrl, handleMessageReactions, notifyWinners, selectWinners, subtractWl } from "../util";
+import { BaseCommandInteraction, Client } from 'discord.js';
+import {
+  addWl,
+  createEmbed,
+  ensureDiscordUrl,
+  handleMessageReactions,
+  notifyWinners,
+  selectWinners,
+  subtractWl,
+} from '../util';
 
-export const run = async (client: Client, interaction: BaseCommandInteraction) => {
+export const run = async (
+  client: Client,
+  interaction: BaseCommandInteraction
+) => {
   try {
     addWl(client);
 
     const { value: userCountRaw } = interaction.options.get('wl-count', true);
     const { value: projectNameRaw } = interaction.options.get('project', true);
-    const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? { value: '' };
-    const { value: durationRaw } = interaction.options.get('duration-hrs') ?? { value: 1 };
-    const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? { value: 0 };
+    const { value: discordUrlRaw } = interaction.options.get(
+      'discord-link'
+    ) ?? { value: '' };
+    const { value: durationRaw } = interaction.options.get('duration-hrs') ?? {
+      value: 1,
+    };
+    const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? {
+      value: 0,
+    };
 
     const winnerCount = Number(userCountRaw);
     const projectName = String(projectNameRaw);
@@ -18,13 +35,14 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
     const maxEntries = Number(maxEntriesRaw);
 
     const hrString = durationHrs === 1 ? 'hour' : 'hours';
-    const timeMessage = `- Ends in ${durationHrs} ${hrString}.`
-    const maxEntriesMessage = maxEntries > 0 ? `\n- Maximum ${maxEntries} entries.` : '';
+    const timeMessage = `- Ends in ${durationHrs} ${hrString}.`;
+    const maxEntriesMessage =
+      maxEntries > 0 ? `\n- Maximum ${maxEntries} entries.` : '';
     const durationMs = durationHrs * 60 * 60 * 1000;
     const endTime = new Date();
     endTime.setTime(endTime.getTime() + durationMs);
 
-    const dropType="raffle";
+    const dropType = 'raffle';
 
     const embed = createEmbed({
       projectName,
@@ -80,7 +98,7 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
           });
           subtractWl(client);
         }
-      }
+      },
     });
 
     if (!success) {
@@ -90,4 +108,4 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
     console.error('Error: ', e);
     interaction.editReply(`An unexpected error occurred: ${e.message}`);
   }
-}
+};

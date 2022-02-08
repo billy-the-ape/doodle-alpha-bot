@@ -1,13 +1,25 @@
-import { BaseCommandInteraction, Client } from "discord.js";
-import { addWl, createEmbed, ensureDiscordUrl, handleMessageReactions, notifyWinners, subtractWl } from "../util";
+import { BaseCommandInteraction, Client } from 'discord.js';
+import {
+  addWl,
+  createEmbed,
+  ensureDiscordUrl,
+  handleMessageReactions,
+  notifyWinners,
+  subtractWl,
+} from '../util';
 
-export const run = async (client: Client, interaction: BaseCommandInteraction) => {
+export const run = async (
+  client: Client,
+  interaction: BaseCommandInteraction
+) => {
   try {
     addWl(client);
 
     const { value: userCountRaw } = interaction.options.get('wl-count', true);
     const { value: projectNameRaw } = interaction.options.get('project', true);
-    const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? { value: '' };
+    const { value: discordUrlRaw } = interaction.options.get(
+      'discord-link'
+    ) ?? { value: '' };
 
     const dropType = 'FCFS';
     const userCount = Number(userCountRaw);
@@ -36,7 +48,7 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
           !winners.find(({ id }) => id === user.id)
         ) {
           winners.push(user);
-    
+
           if (winners.length === userCount) {
             await notifyWinners({
               discordUrl,
@@ -51,10 +63,10 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
       },
       onEnd: () => {
         subtractWl(client);
-      }
+      },
     });
 
-    if(!success) {
+    if (!success) {
       subtractWl(client);
     }
   } catch (e: any) {

@@ -1,11 +1,11 @@
-import { Constants } from "discord.js";
-import { Command } from "../types";
-import { run } from "../handlers/fcfs";
+import { Constants } from 'discord.js';
+import { run } from '../handlers/fcfs';
+import { Command } from '../types';
 
 export const Fcfs: Command = {
-  name: "wl-fcfs",
-  description: "First come first serve whitelist drop (50 max)",
-  type: "CHAT_INPUT",
+  name: 'wl-fcfs',
+  description: 'First come first serve whitelist drop (50 max)',
+  type: 'CHAT_INPUT',
   options: [
     {
       type: Constants.ApplicationCommandOptionTypes.INTEGER,
