@@ -32,7 +32,7 @@ type CreateEmbedProps = {
   timeStamp?: Date;
 }
 
-export const notifyWinners = ({
+export const notifyWinners = async ({
   message,
   discordUrl,
   winners,
@@ -51,11 +51,12 @@ export const notifyWinners = ({
   const publicWinnersMessage = winners.reduce((
     acc,
     user,
-  ) => `${acc} ${user.toString()}`, '\n🏆 Winners:\n');
+  ) => `${acc} ${user.toString()}`, '\n🏆 Winners 🏆\n');
 
   interaction.editReply(winnersMessage);
 
-  message.reply(`**${projectName} whitelist completed**\n${publicWinnersMessage + discordMessage}\n\n_Congratulations!_`)
+  const winnerReply = await message.reply(`**${projectName} whitelist completed**\n${publicWinnersMessage + discordMessage}\n\n🎉🎉 _Congratulations!_ 🎉🎉`)
+  winnerReply.suppressEmbeds(true);
 }
 
 export const selectWinners = ({
@@ -99,11 +100,11 @@ export type HandleMessageReactionsProps = {
   projectName: string,
   dropType: string,
   client: Client,
-  discordUrl?: string,
   winnerCount: number,
   maxEntries?: number,
-  onCollect: (reaction: MessageReaction, user: User, entries: User[], message: Message<boolean>) => void,
-  onEnd?: (entries: User[], message: Message<boolean>) => void,
+  emoji?: string,
+  onCollect: (user: User, entries: User[], message: Message<boolean>) => void | Promise<void>,
+  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>,
 };
 
 export const handleMessageReactions = async ({
@@ -112,11 +113,11 @@ export const handleMessageReactions = async ({
   projectName,
   dropType,
   client,
-  discordUrl,
   winnerCount,
   maxEntries,
   onCollect,
   onEnd,
+  emoji = '🎉'
 }: HandleMessageReactionsProps) => {
   
   const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
@@ -129,7 +130,6 @@ export const handleMessageReactions = async ({
   interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
 
   const message = await channel.send({ embeds: [embed] });
-  const emoji = '🎉';
   const cancelEmoji = '❌';
   const entries: User[] = [];
 
@@ -149,21 +149,35 @@ export const handleMessageReactions = async ({
     time: 86400000, // 24 hours force end
   });
 
-  endEarlyCollector.on('collect', async (_, user) => {
-    if(user.id === interaction.user.id){
+  endEarlyCollector.on('collect', async ({ emoji }, user) => {
+    log('onCancelCollect', { emoji, userId: user.id });
+    if(user.id === interaction.user.id) {
       await message.delete();
       interaction.editReply(`${projectName} ${dropType} removed.`);
     }
   });
 
-  collector.on('collect', (...args) => onCollect(...args, entries, message));
+  collector.on('collect', ({ emoji }, user) => {
+    log('onCollect', { emoji, userId: user.id });
+    onCollect(user, entries, message)
+  });
 
   if(onEnd) {
-    collector.on('end', onEnd);
+    collector.on('end', (a, b) => {
+      log('onEnd', { entries: a.entries.length, reason: b });
+      onEnd(entries, message);
+    });
   }
 
-  collector.on('remove', (_, user) => {
+  collector.on('remove', ({ emoji }, user) => {
+    log('onRemove', { emoji, userId: user.id });
     const index = entries.findIndex(({ id }) => id === user.id);
     entries.splice(index, 1);
   });
+}
+
+export const log = (message?: any, ...optionalParams: any[]) => {
+  if(process.env.NODE_ENV === 'dev') {
+    console.log(message, ...optionalParams);
+  }
 }
