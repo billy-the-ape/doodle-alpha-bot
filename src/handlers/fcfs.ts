@@ -1,8 +1,10 @@
 import { BaseCommandInteraction, Client } from "discord.js";
-import { createEmbed, ensureDiscordUrl, handleMessageReactions, notifyWinners } from "./util";
+import { addWl, createEmbed, ensureDiscordUrl, handleMessageReactions, notifyWinners, subtractWl } from "../util";
 
 export const run = async (client: Client, interaction: BaseCommandInteraction) => {
   try {
+    addWl(client);
+
     const { value: userCountRaw } = interaction.options.get('wl-count', true);
     const { value: projectNameRaw } = interaction.options.get('project', true);
     const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? { value: '' };
@@ -20,7 +22,7 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
       footerText: 'Good luck!',
     });
 
-    await handleMessageReactions({
+    const success = await handleMessageReactions({
       projectName,
       dropType,
       embed,
@@ -43,12 +45,20 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
               projectName,
               message,
             });
+            subtractWl(client);
           }
         }
       },
+      onEnd: () => {
+        subtractWl(client);
+      }
     });
 
+    if(!success) {
+      subtractWl(client);
+    }
   } catch (e: any) {
+    subtractWl(client);
     console.error('Error: ', e);
     interaction.editReply(`An unexpected error occurred: ${e.message}`);
   }

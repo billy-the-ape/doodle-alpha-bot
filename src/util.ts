@@ -39,10 +39,13 @@ export type HandleMessageReactionsProps = {
   dropType: string,
   client: Client,
   winnerCount: number,
+  durationMs?: number,
   maxEntries?: number,
   emoji?: string,
+
+  // Event handlers
   onCollect: (user: User, entries: User[], message: Message<boolean>) => void | Promise<void>,
-  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>,
+  onEnd: (entries: User[], message: Message<boolean>) => void | Promise<void>,
 };
 
 export const ensureDiscordUrl = (discordUrl: string) => {
@@ -67,7 +70,7 @@ export const notifyWinners = async ({
   const winnersMessage = winners.length === 0 ? 'None? 🥲' : winners.reduce((
     acc,
     { username, discriminator },
-  ) => `${acc}\n${username}#${discriminator}`, `\n**===== ${projectName} WINNERS =====**`) + '\n**==========**';
+  ) => `${acc}\n${username}#${discriminator}`, `\n**===== ${projectName} WINNERS =====**`) + `\n**===== ${projectName} END =====**`;
 
   // Message to ping users
   const publicWinnersMessage = winners.length === 0 ? 'None? 🥲' : winners.reduce((
@@ -79,11 +82,13 @@ export const notifyWinners = async ({
   const winnerReply = await message.reply(`**${projectName} whitelist completed**\n${publicWinnersMessage + discordMessage}\n\n🎉🎉 _Congratulations!_ 🎉🎉`)
   winnerReply.suppressEmbeds(true);
 
-  try {
-    const dm = await interaction.user.createDM(true);
-    await dm.send(winnersMessage);
-  } catch {
-    await interaction.editReply('Attempted to DM you winners, but I couldn\'t.\n' + winnersMessage);
+  if(sendDm) {
+    try {
+      const dm = await interaction.user.createDM(true);
+      await dm.send(winnersMessage);
+    } catch {
+      await interaction.editReply('Attempted to DM you winners, but I couldn\'t.\n' + winnersMessage);
+    }
   }
 }
 
@@ -131,6 +136,7 @@ export const handleMessageReactions = async ({
   client,
   winnerCount,
   maxEntries,
+  durationMs = 86400000,
   onCollect,
   onEnd,
   emoji = '🎉'
@@ -141,7 +147,7 @@ export const handleMessageReactions = async ({
   if (!channel || !channel.isText) {
     console.error('No channel found ' + interaction.channelId);
     interaction.editReply('An error occurred, invalid channel.');
-    return;
+    return false;
   }
   interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
 
@@ -156,7 +162,7 @@ export const handleMessageReactions = async ({
   const collector = message.createReactionCollector({
     filter: (reaction) => reaction.emoji.name === emoji,
     max: 1 + maxEntries,
-    time: 86400000, // 24 hours force end
+    time:   durationMs,
   });
 
   const endEarlyCollector = message.createReactionCollector({
@@ -168,6 +174,7 @@ export const handleMessageReactions = async ({
   endEarlyCollector.on('collect', async ({ emoji }, user) => {
     log('onCancelCollect', { emoji, userId: user.id });
     if(user.id === interaction.user.id) {
+      subtractWl(client);
       await message.delete();
       interaction.editReply(`${projectName} ${dropType} removed.`);
     }
@@ -190,6 +197,8 @@ export const handleMessageReactions = async ({
     const index = entries.findIndex(({ id }) => id === user.id);
     entries.splice(index, 1);
   });
+
+  return true;
 }
 
 export const log = (message?: any, ...optionalParams: any[]) => {
@@ -197,3 +206,25 @@ export const log = (message?: any, ...optionalParams: any[]) => {
     console.log(message, ...optionalParams);
   }
 }
+
+let wlCount = 0;
+
+export const addWl = (client: Client) => {
+  wlCount++;
+
+  setStatusOngoing(client);
+}
+
+export const subtractWl = (client: Client) => {
+  wlCount--;
+
+  setStatusOngoing(client);
+}
+
+export const setStatusOngoing = (client: Client) => client.user?.setPresence(({
+    status: wlCount <= 0 ? 'idle' : 'online',
+    activities: [{
+      name: `${wlCount} WL opportunit${wlCount > 1 ? 'ies' : 'y'}`,
+      type: 'WATCHING'
+    }],
+  }));

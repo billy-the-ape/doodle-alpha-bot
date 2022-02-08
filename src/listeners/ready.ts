@@ -1,3 +1,4 @@
+import { setStatusOngoing } from "../util";
 import { Client } from "discord.js";
 import commands from '../commands';
 
@@ -6,7 +7,6 @@ export default (client: Client): void => {
         if (!client.user || !client.application) {
             return;
         }
-
 
         const guildId = process.env.GUILD_ID;
         const guild = client.guilds.cache.get(guildId ?? '');
@@ -18,6 +18,8 @@ export default (client: Client): void => {
           console.log('doodle-alpha-bot registering global commands');
           await client.application.commands.set(commands);
         }
+
+        setStatusOngoing(client);
 
         console.log(`${client.user.username} is online`);
     });

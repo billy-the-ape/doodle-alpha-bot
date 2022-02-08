@@ -1,15 +1,9 @@
 import { BaseCommandInteraction, Client, TextBasedChannel } from "discord.js";
-import { createEmbed, ensureDiscordUrl, handleMessageReactions, notifyWinners, selectWinners } from "./util";
+import { addWl, createEmbed, ensureDiscordUrl, handleMessageReactions, notifyWinners, selectWinners, subtractWl } from "../util";
 
 export const run = async (client: Client, interaction: BaseCommandInteraction) => {
   try {
-    const channel = await client.channels.fetch(interaction.channelId) as TextBasedChannel;
-
-    if (!channel || !channel.isText) {
-      console.error('No channel found ' + interaction.channelId);
-      interaction.editReply('An error occurred, invalid channel.');
-      return;
-    }
+    addWl(client);
 
     const { value: userCountRaw } = interaction.options.get('wl-count', true);
     const { value: projectNameRaw } = interaction.options.get('project', true);
@@ -43,7 +37,7 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
     });
     let complete = false;
 
-    await handleMessageReactions({
+    const success = await handleMessageReactions({
       projectName,
       dropType,
       embed,
@@ -51,6 +45,7 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
       interaction,
       winnerCount,
       maxEntries,
+      durationMs,
       onCollect: async (user, entries, message) => {
         if (
           user.id !== message.author.id &&
@@ -69,6 +64,7 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
               message,
             });
             complete = true;
+            subtractWl(client);
           }
         }
       },
@@ -82,9 +78,14 @@ export const run = async (client: Client, interaction: BaseCommandInteraction) =
             projectName,
             message,
           });
+          subtractWl(client);
         }
       }
     });
+
+    if (!success) {
+      subtractWl(client);
+    }
   } catch (e: any) {
     console.error('Error: ', e);
     interaction.editReply(`An unexpected error occurred: ${e.message}`);
