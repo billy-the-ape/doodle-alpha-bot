@@ -33,14 +33,14 @@ export const run = async (
     const discordUrl = ensureDiscordUrl(String(discordUrlRaw));
     const durationHrs = Number(durationRaw);
     const maxEntries = Number(maxEntriesRaw);
-
-    const hrString = durationHrs === 1 ? 'hour' : 'hours';
-    const timeMessage = `- Ends in ${durationHrs} ${hrString}.`;
-    const maxEntriesMessage =
-      maxEntries > 0 ? `\n- Maximum ${maxEntries} entries.` : '';
     const durationMs = durationHrs * 60 * 60 * 1000;
+
     const endTime = new Date();
     endTime.setTime(endTime.getTime() + durationMs);
+
+    const timeMessage = `Ends <t:${Math.floor(endTime.getTime() / 1000)}:R>`;
+    const maxEntriesMessage =
+      maxEntries > 0 ? `\nMaximum ${maxEntries} entries.` : '';
 
     const dropType = 'raffle';
 
@@ -50,7 +50,7 @@ export const run = async (
       dropType,
       user: interaction.user,
       description: timeMessage + maxEntriesMessage,
-      footerText: 'Good luck! Ends',
+      footerText: 'Good luck! | Ends',
       timeStamp: endTime,
     });
     let complete = false;

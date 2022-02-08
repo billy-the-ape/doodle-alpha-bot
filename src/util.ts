@@ -97,6 +97,13 @@ export const notifyWinners = async ({
   );
   winnerReply.suppressEmbeds(true);
 
+  const newEmbed = message.embeds[0];
+  newEmbed.description = `Ended <t:${Math.round(Date.now() / 1000)}>`;
+
+  message.edit({
+    embeds: [newEmbed],
+  });
+
   if (sendDm) {
     try {
       const dm = await interaction.user.createDM(true);
@@ -106,6 +113,8 @@ export const notifyWinners = async ({
         "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
       );
     }
+  } else {
+    await interaction.editReply(winnersMessage);
   }
 };
 
@@ -187,7 +196,7 @@ export const handleMessageReactions = async ({
   });
 
   endEarlyCollector.on('collect', async ({ emoji }, user) => {
-    log('onCancelCollect', { emoji, userId: user.id });
+    log('onCancelCollect', { emoji: emoji.name, userId: user.id });
     if (user.id === interaction.user.id) {
       subtractWl(client);
       await message.delete();
@@ -196,7 +205,7 @@ export const handleMessageReactions = async ({
   });
 
   collector.on('collect', ({ emoji }, user) => {
-    log('onCollect', { emoji, userId: user.id });
+    log('onCollect', { emoji: emoji.name, userId: user.id });
     onCollect(user, entries, message);
   });
 
@@ -208,7 +217,7 @@ export const handleMessageReactions = async ({
   }
 
   collector.on('remove', ({ emoji }, user) => {
-    log('onRemove', { emoji, userId: user.id });
+    log('onRemove', { emoji: emoji.name, userId: user.id });
     const index = entries.findIndex(({ id }) => id === user.id);
     entries.splice(index, 1);
   });
