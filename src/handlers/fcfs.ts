@@ -2,6 +2,7 @@ import { BaseCommandInteraction, Client } from 'discord.js';
 import {
   addWl,
   createEmbed,
+  editInteractionReply,
   getParameters,
   handleMessageReactions,
   notifyWinners,
@@ -67,6 +68,9 @@ export const run = async (
   } catch (e: any) {
     subtractWl(client);
     console.error('Error: ', e);
-    interaction.editReply(`An unexpected error occurred: ${e.message}`);
+    await editInteractionReply(
+      interaction,
+      `An unexpected error occurred: ${e.message}`
+    );
   }
 };

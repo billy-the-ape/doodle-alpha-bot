@@ -4,8 +4,10 @@ import {
   Client,
   Message,
   MessageEmbed,
+  MessagePayload,
   TextBasedChannel,
   User,
+  WebhookEditMessageOptions,
 } from 'discord.js';
 
 export type NotifyWinnersProps = {
@@ -97,7 +99,7 @@ export const notifyWinners = async ({
   const winnerReply = await message.reply(
     `**${projectName} whitelist completed**\n${
       publicWinnersMessage + discordMessage
-    }\n\n🎉🎉 _Congratulations!_ 🎉🎉`
+    }\n\n🎉 _Congratulations!_ 🎉`
   );
   winnerReply.suppressEmbeds(true);
 
@@ -112,19 +114,21 @@ export const notifyWinners = async ({
   });
 
   if (sendDm) {
-    await interaction.editReply(
+    await editInteractionReply(
+      interaction,
       `${projectName}: ${winners.length} winners selected`
     );
     try {
       const dm = await interaction.user.createDM(true);
       await dm.send(winnersMessage);
     } catch {
-      await interaction.editReply(
+      await editInteractionReply(
+        interaction,
         "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
       );
     }
   } else {
-    await interaction.editReply(winnersMessage);
+    await editInteractionReply(interaction, winnersMessage);
   }
 };
 
@@ -182,7 +186,10 @@ export const handleMessageReactions = async ({
 
   if (!channel || !channel.isText) {
     console.error('No channel found ' + interaction.channelId);
-    interaction.editReply('An error occurred, invalid channel.');
+    await editInteractionReply(
+      interaction,
+      'An error occurred, invalid channel.'
+    );
     return false;
   }
 
@@ -195,7 +202,8 @@ export const handleMessageReactions = async ({
   } catch (e: any) {
     if (e.message === 'Unknown Emoji') {
       await message.delete();
-      interaction.editReply(
+      await editInteractionReply(
+        interaction,
         `**Invalid custom emoji - WL Cancelled**\n\nThe bot cannot use ${emoji} because it is probably from a server the bot is not in. To be safe, only use standard emojis or custome ones from the current server.`
       );
       return false;
@@ -223,7 +231,10 @@ export const handleMessageReactions = async ({
     if (user.id === interaction.user.id) {
       subtractWl(client);
       await message.delete();
-      interaction.editReply(`${projectName} ${dropType} removed.`);
+      await editInteractionReply(
+        interaction,
+        `${projectName} ${dropType} removed.`
+      );
     }
   });
 
@@ -245,7 +256,10 @@ export const handleMessageReactions = async ({
     entries.splice(index, 1);
   });
 
-  interaction.editReply(`${projectName}: ${dropType} WL drop created.`);
+  await editInteractionReply(
+    interaction,
+    `${projectName}: ${dropType} WL drop created.`
+  );
 
   return true;
 };
@@ -297,8 +311,6 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
     value: '🎉',
   };
 
-  console.log({ emojiRaw });
-
   return {
     winnerCount: Number(userCountRaw),
     projectName: String(projectNameRaw),
@@ -307,4 +319,15 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
     durationMs: Number(durationRaw) * 60 * 60 * 1000,
     emoji: String(emojiRaw),
   };
+};
+
+export const editInteractionReply = async (
+  interaction: BaseCommandInteraction,
+  options: string | MessagePayload | WebhookEditMessageOptions
+) => {
+  try {
+    await interaction.editReply(options);
+  } catch (e) {
+    console.error('Error: ', e);
+  }
 };

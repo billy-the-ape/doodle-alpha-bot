@@ -9,7 +9,8 @@
     "start": "node dist/bot.js",
     "dev": "nodemon src/bot.ts",
     "build": "tsc",
-    "lint": "eslint src/**"
+    "lint": "eslint src/**",
+    "logs": "heroku logs -a doodle-alpha-bot --tail"
   },
   "dependencies": {
     "discord.js": "13.6.0",
