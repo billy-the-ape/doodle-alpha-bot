@@ -45,16 +45,17 @@ export const Fcfs: Command = {
       const userCount = Number(userCountRaw);
       const projectName = String(projectNameRaw);
       const discordUrl = String(discordUrlRaw);
+      const dropType = 'FCFS';
 
       const embed = createEmbed({
         projectName,
+        dropType,
         winnerCount: userCount,
-        dropType: 'raffle',
         user: interaction.user,
         footerText: 'Good luck!',
       });
 
-      interaction.editReply(`Collecting entries for ${projectName} WL FCFS`);
+      interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
 
       const message = await channel.send({ embeds: [embed] });
       const emoji = '🎉';

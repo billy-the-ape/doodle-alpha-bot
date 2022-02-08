@@ -74,17 +74,19 @@ export const Raffle: Command = {
       const endTime = new Date();
       endTime.setTime(endTime.getTime() + durationMs);
 
+      const dropType="raffle";
+
       const embed = createEmbed({
         projectName,
         winnerCount,
-        dropType: 'raffle',
+        dropType,
         user: interaction.user,
         description: timeMessage + maxEntriesMessage,
         footerText: 'Good luck! Ends',
         timeStamp: endTime,
       });
 
-      interaction.editReply(`Collecting entries for ${projectName} WL Raffle`);
+      interaction.editReply(`Collecting entries for ${projectName} WL ${dropType}`);
 
       const message = await channel.send({ embeds: [embed] });
       const emoji = '🎉';
