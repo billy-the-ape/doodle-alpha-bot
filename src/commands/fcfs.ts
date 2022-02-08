@@ -36,8 +36,10 @@ export const Fcfs: Command = {
 
       const userCount = Number(userCountRaw);
       const projectName = String(projectNameRaw);
-      let discordUrl = String(discordUrlRaw);
       const dropType = 'FCFS';
+      let discordUrl = String(discordUrlRaw);
+      if (discordUrl.startsWith('discord' || discordUrl.startsWith('www'))) discordUrl = 'https://' + discordUrl;
+      else if (discordUrl.trim() !== '') discordUrl = 'https://discord.gg/' + discordUrl;
 
       const embed = createEmbed({
         projectName,
