@@ -16,6 +16,7 @@ export type NotifyWinnersProps = {
   winners: User[];
   interaction: BaseCommandInteraction<CacheType>;
   projectName: string;
+  description: string;
   sendDm?: boolean;
 };
 
@@ -71,6 +72,7 @@ export const notifyWinners = async ({
   winners,
   interaction,
   projectName,
+  description,
   sendDm = true,
 }: NotifyWinnersProps) => {
   const discordMessage = discordUrl
@@ -96,9 +98,11 @@ export const notifyWinners = async ({
           '\n🏆 Winners 🏆\n'
         );
 
+  const desc = description ? `\n\n${description}` : '';
+
   const winnerReply = await message.reply(
     `**${projectName} whitelist completed**\n${
-      publicWinnersMessage + discordMessage
+      publicWinnersMessage + desc + discordMessage
     }\n\n🎉 _Congratulations!_ 🎉`
   );
   winnerReply.suppressEmbeds(true);
@@ -301,6 +305,9 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
   const { value: discordUrlRaw } = interaction.options.get('discord-link') ?? {
     value: '',
   };
+  const { value: descriptionRaw } = interaction.options.get('description') ?? {
+    value: '',
+  };
   const { value: durationRaw } = interaction.options.get('duration-hrs') ?? {
     value: 1,
   };
@@ -314,6 +321,7 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
   return {
     winnerCount: Number(userCountRaw),
     projectName: String(projectNameRaw),
+    description: String(descriptionRaw),
     discordUrl: ensureDiscordUrl(String(discordUrlRaw)),
     maxEntries: Number(maxEntriesRaw),
     durationMs: Number(durationRaw) * 60 * 60 * 1000,

@@ -22,6 +22,12 @@ export const Fcfs: Command = {
     },
     {
       type: Constants.ApplicationCommandOptionTypes.STRING,
+      name: 'description',
+      description: 'Additional info about the WL drop, optional.',
+      required: false,
+    },
+    {
+      type: Constants.ApplicationCommandOptionTypes.STRING,
       name: 'discord-link',
       description: 'Link to project discord, optional.',
       required: false,

@@ -21,6 +21,12 @@ export const Raffle: Command = {
       required: true,
     },
     {
+      type: Constants.ApplicationCommandOptionTypes.STRING,
+      name: 'description',
+      description: 'Additional info about the WL drop, optional.',
+      required: false,
+    },
+    {
       type: Constants.ApplicationCommandOptionTypes.NUMBER,
       name: 'duration-hrs',
       description: 'Duration (in hours) for raffle. Optional, default 1 hr.',

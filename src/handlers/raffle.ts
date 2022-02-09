@@ -25,6 +25,7 @@ export const run = async (
       maxEntries,
       durationMs,
       emoji,
+      description,
     } = getParameters(interaction);
 
     const timeStamp = new Date();
@@ -71,6 +72,7 @@ export const run = async (
               interaction,
               projectName,
               message,
+              description,
             });
             complete = true;
             subtractWl(client);
@@ -86,6 +88,7 @@ export const run = async (
             interaction,
             projectName,
             message,
+            description,
           });
           subtractWl(client);
         }

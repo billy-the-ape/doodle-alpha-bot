@@ -17,7 +17,7 @@ export const run = async (
     addWl(client);
 
     const dropType = 'FCFS';
-    const { winnerCount, projectName, discordUrl, emoji } =
+    const { winnerCount, projectName, discordUrl, emoji, description } =
       getParameters(interaction);
 
     const embed = createEmbed({
@@ -51,6 +51,7 @@ export const run = async (
               winners,
               interaction,
               projectName,
+              description,
               message,
             });
             subtractWl(client);
