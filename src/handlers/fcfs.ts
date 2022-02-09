@@ -58,9 +58,6 @@ export const run = async (
           }
         }
       },
-      onEnd: () => {
-        subtractWl(client);
-      },
     });
 
     if (!success) {

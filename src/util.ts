@@ -56,7 +56,7 @@ export type HandleMessageReactionsProps = {
     entries: User[],
     message: Message<boolean>
   ) => void | Promise<void>;
-  onEnd: (entries: User[], message: Message<boolean>) => void | Promise<void>;
+  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>;
 };
 
 export const ensureDiscordUrl = (discordUrl: string) => {
