@@ -28,6 +28,8 @@ export const setStatusOngoing = (client: Client) =>
     ],
   });
 
+const MAX_MAX_ENTRIES = 99999;
+
 export const setupActiveWhitelists = async (client: Client) => {
   const whitelists = await getActiveWhitelists();
 
@@ -49,34 +51,37 @@ export const setupActiveWhitelists = async (client: Client) => {
           2
         )}`
       );
-      // await removeWhitelist(whitelist._id);
+      await removeWhitelist(whitelist._id);
       return;
     }
     wlCount++;
 
     // Get users who have reacted
     let users: User[] = [];
+
+    const maxEntries =
+      (whitelist.maxEntries ?? 0) <= 0
+        ? MAX_MAX_ENTRIES
+        : whitelist.maxEntries ?? MAX_MAX_ENTRIES;
     const reactionUsersRaw = message.reactions.cache.get(
       whitelist.emoji
     )?.users;
 
     if (reactionUsersRaw) {
-      reactionUsersRaw.fetch({});
-      const userIdsRaw = reactionUsersRaw.cache.keys();
+      const userIdsRaw = await reactionUsersRaw.fetch();
 
       if (userIdsRaw) {
         const userIds = Array.from(userIdsRaw);
         users = userIds
-          .filter((id) => id !== message.author.id)
-          .map((id) => reactionUsersRaw.cache.get(id)!)
-          .filter((u) => !!u)
-          .slice(0, whitelist.maxEntries ?? 99999);
+          .filter(([id, user]) => id !== message.author.id && !user.bot)
+          .map(([_, user]) => user)
+          .slice(0, maxEntries);
       }
     }
 
     const durationMs = whitelist.endTime - Date.now();
 
-    if (durationMs <= 0) {
+    if (durationMs <= 0 || users.length >= maxEntries) {
       // log('Overdue Whitelist', whitelist);
       if (whitelist.dropType === 'raffle') {
         const winners = selectWinners({
