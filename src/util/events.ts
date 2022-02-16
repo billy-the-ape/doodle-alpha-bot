@@ -11,6 +11,10 @@ import {
 import { DEFAULT_DURATION } from './constants';
 import { subtractWl } from './setup';
 
+const banlist = process.env.BANLIST
+  ? String(process.env.BANLIST).split(',')
+  : [];
+
 export const fcfsOnCollect =
   ({
     winnerCount,
@@ -21,12 +25,17 @@ export const fcfsOnCollect =
     client,
     creatorUser,
   }: MessageEventsProps): OnCollectHandler =>
-  async (user, winners, message) => {
+  async (user, winners, message, reaction) => {
     if (
       user.id !== message.author.id &&
       winners.length < winnerCount &&
       !winners.find(({ id }) => id === user.id)
     ) {
+      if (banlist.includes(user.id)) {
+        reaction.remove();
+        return;
+      }
+
       winners.push(user);
 
       if (winners.length === winnerCount) {
@@ -132,7 +141,7 @@ export const applyMessageEvents = async ({
   const endEarlyCollector = message.createReactionCollector({
     filter: (reaction) => reaction.emoji.name === cancelEmoji,
     max: 1 + maxEntries,
-    time: durationMs, // 24 hours force end
+    time: durationMs,
   });
 
   endEarlyCollector.on('collect', async ({ emoji }, user) => {
@@ -148,9 +157,9 @@ export const applyMessageEvents = async ({
     }
   });
 
-  collector.on('collect', ({ emoji }, user) => {
-    log('onCollect', { emoji: emoji.name, userId: user.id });
-    onCollect(user, entries, message);
+  collector.on('collect', (reaction, user) => {
+    log('onCollect', { emoji: reaction.emoji.name, userId: user.id });
+    onCollect(user, entries, message, reaction);
   });
 
   if (onEnd) {

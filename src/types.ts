@@ -5,6 +5,7 @@ import {
   Client,
   Message,
   MessageEmbed,
+  MessageReaction,
   User,
 } from 'discord.js';
 
@@ -15,7 +16,8 @@ export interface Command extends ChatInputApplicationCommandData {
 export type OnCollectHandler = (
   user: User,
   entries: User[],
-  message: Message<boolean>
+  message: Message<boolean>,
+  reaction: MessageReaction
 ) => void | Promise<void>;
 
 export type OnEndHandler = (
@@ -85,12 +87,8 @@ export type HandleMessageReactionsProps = {
   durationMs?: number;
 
   // Event handlers
-  onCollect: (
-    user: User,
-    entries: User[],
-    message: Message<boolean>
-  ) => void | Promise<void>;
-  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>;
+  onCollect: OnCollectHandler;
+  onEnd?: OnEndHandler;
 };
 
 export type MessageEventsProps = {
