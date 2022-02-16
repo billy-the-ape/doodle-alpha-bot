@@ -17,7 +17,7 @@ export const notifyWinners = async ({
   sendDm = true,
 }: NotifyWinnersProps) => {
   const discordMessage = discordUrl
-    ? `\n\n**Join discord: ${discordUrl}**`
+    ? `\n\n**Join discord: <${discordUrl}>**`
     : '';
 
   // Message for creator of WL to easily copy all the discord names with #
