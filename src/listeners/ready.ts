@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 import commands from '../commands';
-import { setupActiveWhitelists } from '../util';
+import { setupActiveWhitelists } from '../util/setup';
 
 export default (client: Client): void => {
   client.on('ready', async () => {
