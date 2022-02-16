@@ -1,12 +1,12 @@
 import { BaseCommandInteraction, Client } from 'discord.js';
+import { addWhitelist } from '../mongo';
 import {
   addWl,
   createEmbed,
   editInteractionReply,
   getParameters,
   handleMessageReactions,
-  notifyWinners,
-  selectWinners,
+  raffleEvents,
   subtractWl,
 } from '../util';
 
@@ -45,9 +45,8 @@ export const run = async (
       description: timeMessage + maxEntriesMessage,
       footerText: 'Good luck! | Ends',
     });
-    let complete = false;
 
-    const success = await handleMessageReactions({
+    const messageId = await handleMessageReactions({
       projectName,
       dropType,
       embed,
@@ -56,48 +55,37 @@ export const run = async (
       maxEntries,
       durationMs,
       emoji,
-      onCollect: async (user, entries, message) => {
-        if (
-          user.id !== message.author.id &&
-          (maxEntries < 1 || entries.length < maxEntries) &&
-          !entries.find(({ id }) => id === user.id)
-        ) {
-          entries.push(user);
-
-          if (entries.length === maxEntries) {
-            const winners = selectWinners({ winnerCount, entries });
-            await notifyWinners({
-              discordUrl,
-              winners,
-              interaction,
-              projectName,
-              message,
-              description,
-            });
-            complete = true;
-            subtractWl(client);
-          }
-        }
-      },
-      onEnd: async (entries, message) => {
-        if (!complete) {
-          const winners = selectWinners({ winnerCount, entries });
-          await notifyWinners({
-            discordUrl,
-            winners,
-            interaction,
-            projectName,
-            message,
-            description,
-          });
-          subtractWl(client);
-        }
-      },
+      ...raffleEvents({
+        client,
+        interaction,
+        discordUrl,
+        winnerCount,
+        projectName,
+        description,
+        maxEntries,
+        creatorUser: interaction.user,
+      }),
     });
 
-    if (!success) {
+    if (!messageId) {
       subtractWl(client);
+      return;
     }
+
+    await addWhitelist({
+      _id: String(messageId),
+      endTime: Date.now() + durationMs,
+      projectName,
+      dropType,
+      winnerCount,
+      discordUrl,
+      description,
+      emoji,
+      userId: interaction.user.id,
+      guildId: interaction.guildId!,
+      channelId: interaction.channelId,
+      interactionId: interaction.id,
+    });
   } catch (e: any) {
     console.error('Error: ', e);
     await editInteractionReply(

@@ -1,63 +1,23 @@
 import {
   BaseCommandInteraction,
-  CacheType,
   Client,
-  Message,
   MessageEmbed,
   MessagePayload,
   TextBasedChannel,
   User,
   WebhookEditMessageOptions,
 } from 'discord.js';
-
-export type NotifyWinnersProps = {
-  message: Message<boolean>;
-  discordUrl: string;
-  winners: User[];
-  interaction: BaseCommandInteraction<CacheType>;
-  projectName: string;
-  description: string;
-  sendDm?: boolean;
-};
-
-export type SelectWinnersProps = {
-  winnerCount: number;
-  entries: User[];
-};
-
-export type CreateEmbedProps = {
-  winnerCount: number | string;
-  dropType: string;
-  projectName: string;
-  user: User;
-  footerText: string;
-  emoji: string;
-
-  // Optional
-  description?: string;
-  timeStamp?: Date;
-};
-
-export type HandleMessageReactionsProps = {
-  interaction: BaseCommandInteraction;
-  embed: MessageEmbed;
-  projectName: string;
-  dropType: string;
-  client: Client;
-  emoji: string;
-  maxEntries: number;
-
-  // Optional
-  durationMs?: number;
-
-  // Event handlers
-  onCollect: (
-    user: User,
-    entries: User[],
-    message: Message<boolean>
-  ) => void | Promise<void>;
-  onEnd?: (entries: User[], message: Message<boolean>) => void | Promise<void>;
-};
+import { getActiveWhitelists, removeWhitelist } from './mongo';
+import {
+  ApplyMessageEventsProps,
+  CreateEmbedProps,
+  HandleMessageReactionsProps,
+  MessageEventsProps,
+  NotifyWinnersProps,
+  OnCollectHandler,
+  OnEndHandler,
+  SelectWinnersProps,
+} from './types';
 
 export const ensureDiscordUrl = (discordUrl: string) => {
   if (discordUrl.startsWith('discord' || discordUrl.startsWith('www')))
@@ -66,11 +26,14 @@ export const ensureDiscordUrl = (discordUrl: string) => {
   return discordUrl;
 };
 
+const NONE_MESSAGE = '\nNone? 🥲';
+
 export const notifyWinners = async ({
   message,
   discordUrl,
   winners,
   interaction,
+  creatorUser,
   projectName,
   description,
   sendDm = true,
@@ -80,19 +43,21 @@ export const notifyWinners = async ({
     : '';
 
   // Message for creator of WL to easily copy all the discord names with #
-  const winnersMessage =
+  let winnersMessage =
     winners.length === 0
-      ? 'None? 🥲'
+      ? NONE_MESSAGE
       : winners.reduce(
           (acc, { username, discriminator }) =>
             `${acc}\n${username}#${discriminator}`,
-          `\n**===== ${projectName} WINNERS =====**`
-        ) + `\n**===== ${projectName} END =====**`;
+          ''
+        );
+
+  winnersMessage = `\n**===== ${projectName} WINNERS =====**${winnersMessage}\n**===== ${projectName} END =====**`;
 
   // Message to ping users
   const publicWinnersMessage =
     winners.length === 0
-      ? 'None? 🥲'
+      ? NONE_MESSAGE
       : winners.reduce(
           (acc, user) => `${acc} ${user.toString()}`,
           '\n🏆 Winners 🏆\n'
@@ -118,21 +83,27 @@ export const notifyWinners = async ({
   });
 
   if (sendDm) {
-    await editInteractionReply(
-      interaction,
-      `${projectName}: ${winners.length} winners selected`
-    );
-    try {
-      const dm = await interaction.user.createDM(true);
-      await dm.send(winnersMessage);
-    } catch {
+    if (interaction) {
       await editInteractionReply(
         interaction,
-        "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
+        `${projectName}: ${winners.length} winners selected`
       );
     }
+    try {
+      const dm = await creatorUser.createDM(true);
+      await dm.send(winnersMessage);
+    } catch {
+      if (interaction) {
+        await editInteractionReply(
+          interaction,
+          "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
+        );
+      }
+    }
   } else {
-    await editInteractionReply(interaction, winnersMessage);
+    if (interaction) {
+      await editInteractionReply(interaction, winnersMessage);
+    }
   }
 };
 
@@ -172,6 +143,8 @@ export const createEmbed = ({
     footer: { text: footerText },
   }).setTimestamp(timeStamp);
 
+export const DEFAULT_DURATION = 86400000;
+
 export const handleMessageReactions = async ({
   interaction,
   embed,
@@ -179,7 +152,7 @@ export const handleMessageReactions = async ({
   dropType,
   client,
   maxEntries,
-  durationMs = 86400000,
+  durationMs = DEFAULT_DURATION,
   onCollect,
   onEnd,
   emoji,
@@ -198,8 +171,6 @@ export const handleMessageReactions = async ({
   }
 
   const message = await channel.send({ embeds: [embed] });
-  const cancelEmoji = '❌';
-  const entries: User[] = [];
 
   try {
     await message.react(emoji);
@@ -216,6 +187,40 @@ export const handleMessageReactions = async ({
     }
   }
 
+  applyMessageEvents({
+    message,
+    emoji,
+    maxEntries,
+    durationMs,
+    interaction,
+    creatorUser: interaction.user,
+    client,
+    projectName,
+    dropType,
+    onCollect,
+    onEnd,
+  });
+
+  return message.id;
+};
+
+export const applyMessageEvents = async ({
+  message,
+  emoji,
+  maxEntries = 0,
+  durationMs,
+  interaction,
+  client,
+  projectName,
+  dropType,
+  creatorUser,
+  onCollect,
+  onEnd,
+  existingUsers = [],
+}: ApplyMessageEventsProps) => {
+  const cancelEmoji = '❌';
+  const entries: User[] = [...existingUsers];
+
   const collector = message.createReactionCollector({
     filter: (reaction) =>
       reaction.emoji.name === emoji ||
@@ -227,13 +232,14 @@ export const handleMessageReactions = async ({
   const endEarlyCollector = message.createReactionCollector({
     filter: (reaction) => reaction.emoji.name === cancelEmoji,
     max: 1 + maxEntries,
-    time: 86400000, // 24 hours force end
+    time: durationMs, // 24 hours force end
   });
 
   endEarlyCollector.on('collect', async ({ emoji }, user) => {
     log('onCancelCollect', { emoji: emoji.name, userId: user.id });
-    if (user.id === interaction.user.id) {
+    if (user.id === creatorUser.id) {
       subtractWl(client);
+      await removeWhitelist(message.id);
       await message.delete();
       await editInteractionReply(
         interaction,
@@ -264,8 +270,6 @@ export const handleMessageReactions = async ({
     interaction,
     `${projectName}: ${dropType} WL drop created.`
   );
-
-  return true;
 };
 
 export const log = (message?: any, ...optionalParams: any[]) => {
@@ -330,12 +334,206 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
 };
 
 export const editInteractionReply = async (
-  interaction: BaseCommandInteraction,
-  options: string | MessagePayload | WebhookEditMessageOptions
+  interaction?: BaseCommandInteraction,
+  options?: string | MessagePayload | WebhookEditMessageOptions
 ) => {
   try {
-    await interaction.editReply(options);
+    await interaction?.editReply(options!);
   } catch (e) {
     console.error('Error: ', e);
   }
+};
+
+export const fcfsOnCollect =
+  ({
+    winnerCount,
+    discordUrl,
+    interaction,
+    projectName,
+    description,
+    client,
+    creatorUser,
+  }: MessageEventsProps): OnCollectHandler =>
+  async (user, winners, message) => {
+    if (
+      user.id !== message.author.id &&
+      winners.length < winnerCount &&
+      !winners.find(({ id }) => id === user.id)
+    ) {
+      winners.push(user);
+
+      if (winners.length === winnerCount) {
+        await notifyWinners({
+          discordUrl,
+          winners,
+          interaction,
+          projectName,
+          description,
+          message,
+          creatorUser,
+        });
+        subtractWl(client);
+        await removeWhitelist(message.id);
+      }
+    }
+  };
+
+export const raffleEvents = ({
+  client,
+  interaction,
+  creatorUser,
+  discordUrl,
+  winnerCount,
+  projectName,
+  description,
+  maxEntries = 0,
+}: MessageEventsProps): {
+  onCollect: OnCollectHandler;
+  onEnd: OnEndHandler;
+} => {
+  let complete = false;
+  return {
+    onCollect: async (user, entries, message) => {
+      if (
+        user.id !== message.author.id &&
+        (maxEntries < 1 || entries.length < maxEntries) &&
+        !entries.find(({ id }) => id === user.id)
+      ) {
+        entries.push(user);
+
+        if (entries.length === maxEntries) {
+          const winners = selectWinners({ winnerCount, entries });
+          await notifyWinners({
+            discordUrl,
+            winners,
+            interaction,
+            projectName,
+            message,
+            description,
+            creatorUser,
+          });
+          complete = true;
+          subtractWl(client);
+          await removeWhitelist(message.id);
+        }
+      }
+    },
+    onEnd: async (entries, message) => {
+      if (!complete) {
+        const winners = selectWinners({ winnerCount, entries });
+        await notifyWinners({
+          discordUrl,
+          winners,
+          interaction,
+          projectName,
+          message,
+          description,
+          creatorUser,
+        });
+        subtractWl(client);
+        await removeWhitelist(message.id);
+      }
+    },
+  };
+};
+
+export const setupActiveWhitelists = async (client: Client) => {
+  const whitelists = await getActiveWhitelists();
+
+  console.log(`${whitelists.length} existing whitelists found. Loading...`);
+
+  whitelists.forEach(async (whitelist) => {
+    const creatorUser = await client.users.fetch(whitelist.userId);
+    const channel = (await client.channels.fetch(
+      whitelist.channelId
+    )) as TextBasedChannel;
+
+    const message = await channel.messages.fetch(whitelist._id);
+
+    if (!message || !creatorUser) {
+      console.error(
+        `An orphaned whitelist was found \n${JSON.stringify(
+          whitelist,
+          null,
+          2
+        )}`
+      );
+      // await removeWhitelist(whitelist._id);
+      return;
+    }
+    wlCount++;
+
+    // Get users who have reacted
+    let users: User[] = [];
+    const reactionUsersRaw = message.reactions.cache.get(
+      whitelist.emoji
+    )?.users;
+
+    if (reactionUsersRaw) {
+      reactionUsersRaw.fetch({});
+      const userIdsRaw = reactionUsersRaw.cache.keys();
+
+      if (userIdsRaw) {
+        const userIds = Array.from(userIdsRaw);
+        users = userIds
+          .filter((id) => id !== message.author.id)
+          .map((id) => reactionUsersRaw.cache.get(id)!)
+          .filter((u) => !!u)
+          .slice(0, whitelist.maxEntries ?? 99999);
+      }
+    }
+
+    const durationMs = whitelist.endTime - Date.now();
+
+    if (durationMs <= 0) {
+      log('Overdue Whitelist', whitelist);
+      if (whitelist.dropType === 'raffle') {
+        const winners = selectWinners({
+          winnerCount: whitelist.winnerCount,
+          entries: users,
+        });
+        notifyWinners({
+          ...whitelist,
+          message,
+          winners,
+          creatorUser: creatorUser,
+        });
+      } else if (whitelist.dropType === 'FCFS') {
+        notifyWinners({
+          ...whitelist,
+          message,
+          winners: users,
+          creatorUser,
+        });
+      }
+      await removeWhitelist(whitelist._id);
+    } else {
+      log('Active Whitelist', whitelist);
+      const events =
+        whitelist.dropType === 'raffle'
+          ? raffleEvents({
+              ...whitelist,
+              client,
+              creatorUser,
+            })
+          : {
+              onCollect: fcfsOnCollect({
+                ...whitelist,
+                client,
+                creatorUser,
+              }),
+            };
+      applyMessageEvents({
+        client,
+        ...whitelist,
+        ...events,
+        message,
+        creatorUser,
+        existingUsers: users,
+        durationMs,
+      });
+    }
+  });
+
+  console.log('Whitelists loaded.');
 };

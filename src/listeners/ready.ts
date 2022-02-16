@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 import commands from '../commands';
-import { setStatusOngoing } from '../util';
+import { setupActiveWhitelists } from '../util';
 
 export default (client: Client): void => {
   client.on('ready', async () => {
@@ -19,7 +19,7 @@ export default (client: Client): void => {
       await client.application.commands.set(commands);
     }
 
-    setStatusOngoing(client);
+    await setupActiveWhitelists(client);
 
     console.log(`${client.user.username} is online`);
   });

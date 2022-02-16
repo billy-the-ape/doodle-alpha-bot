@@ -1,11 +1,13 @@
 import { BaseCommandInteraction, Client } from 'discord.js';
+import { addWhitelist } from '../mongo';
 import {
   addWl,
   createEmbed,
+  DEFAULT_DURATION,
   editInteractionReply,
+  fcfsOnCollect,
   getParameters,
   handleMessageReactions,
-  notifyWinners,
   subtractWl,
 } from '../util';
 
@@ -29,7 +31,7 @@ export const run = async (
       emoji,
     });
 
-    const success = await handleMessageReactions({
+    const messageId = await handleMessageReactions({
       projectName,
       dropType,
       embed,
@@ -37,32 +39,36 @@ export const run = async (
       interaction,
       maxEntries: winnerCount,
       emoji,
-      onCollect: async (user, winners, message) => {
-        if (
-          user.id !== message.author.id &&
-          winners.length < winnerCount &&
-          !winners.find(({ id }) => id === user.id)
-        ) {
-          winners.push(user);
-
-          if (winners.length === winnerCount) {
-            await notifyWinners({
-              discordUrl,
-              winners,
-              interaction,
-              projectName,
-              description,
-              message,
-            });
-            subtractWl(client);
-          }
-        }
-      },
+      onCollect: fcfsOnCollect({
+        winnerCount,
+        discordUrl,
+        interaction,
+        projectName,
+        description,
+        client,
+        creatorUser: interaction.user,
+      }),
     });
 
-    if (!success) {
+    if (!messageId) {
       subtractWl(client);
+      return;
     }
+
+    await addWhitelist({
+      _id: String(messageId),
+      endTime: Date.now() + DEFAULT_DURATION,
+      projectName,
+      dropType,
+      winnerCount,
+      discordUrl,
+      description,
+      emoji,
+      userId: interaction.user.id,
+      guildId: interaction.guildId!,
+      channelId: interaction.channelId,
+      interactionId: interaction.id,
+    });
   } catch (e: any) {
     subtractWl(client);
     console.error('Error: ', e);
