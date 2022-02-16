@@ -5,6 +5,7 @@ import {
   NotifyWinnersProps,
   SelectWinnersProps,
 } from '../types';
+import { generateCsv } from './fs';
 
 export const notifyWinners = async ({
   message,
@@ -29,8 +30,7 @@ export const notifyWinners = async ({
             `${acc}\n${username}#${discriminator}`,
           ''
         );
-
-  winnersMessage = `\n**===== ${projectName} WINNERS =====**${winnersMessage}\n**===== ${projectName} END =====**`;
+  winnersMessage = `${projectName} Whitelist Winners${winnersMessage}`;
 
   // Message to ping users
   const publicWinnersMessage =
@@ -61,27 +61,26 @@ export const notifyWinners = async ({
   });
 
   if (sendDm) {
-    if (interaction) {
+    await editInteractionReply(
+      interaction,
+      `${projectName}: ${winners.length} winners selected`
+    );
+    try {
+      const csv = await generateCsv(projectName, winnersMessage);
+      const dm = await creatorUser.createDM(true);
+      await dm.send({
+        content: `\`${projectName}\` whitelist drop complete. \`${winners.length}\` winners selected. Full list attached below.`,
+        files: [csv],
+      });
+    } catch (e) {
       await editInteractionReply(
         interaction,
-        `${projectName}: ${winners.length} winners selected`
+        "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
       );
-    }
-    try {
-      const dm = await creatorUser.createDM(true);
-      await dm.send(winnersMessage);
-    } catch {
-      if (interaction) {
-        await editInteractionReply(
-          interaction,
-          "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
-        );
-      }
+      console.error('Error', e);
     }
   } else {
-    if (interaction) {
-      await editInteractionReply(interaction, winnersMessage);
-    }
+    await editInteractionReply(interaction, winnersMessage);
   }
 };
 
