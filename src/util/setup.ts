@@ -83,14 +83,14 @@ export const setupActiveWhitelists = async (client: Client) => {
           winnerCount: whitelist.winnerCount,
           entries: users,
         });
-        notifyWinners({
+        await notifyWinners({
           ...whitelist,
           message,
           winners,
           creatorUser: creatorUser,
         });
       } else if (whitelist.dropType === 'FCFS') {
-        notifyWinners({
+        await notifyWinners({
           ...whitelist,
           message,
           winners: users,
