@@ -1,4 +1,4 @@
-import { TextBasedChannel, User } from 'discord.js';
+import { MessageReaction, TextBasedChannel, User } from 'discord.js';
 import { editInteractionReply, log, notifyWinners, selectWinners } from '.';
 import { removeWhitelist } from '../mongo';
 import {
@@ -11,9 +11,20 @@ import {
 import { DEFAULT_DURATION } from './constants';
 import { subtractWl } from './setup';
 
-const banlist = process.env.BANLIST
-  ? String(process.env.BANLIST).split(',')
-  : [];
+let banlist: string[];
+
+const userIsBanned = (userId: string, reaction: MessageReaction) => {
+  if (!banlist) {
+    banlist = process.env.BANLIST ? String(process.env.BANLIST).split(',') : [];
+  }
+  if (banlist.includes(userId)) {
+    /* try {
+      reaction.remove();
+    } catch {} */
+    return true;
+  }
+  return false;
+};
 
 export const fcfsOnCollect =
   ({
@@ -31,25 +42,22 @@ export const fcfsOnCollect =
       winners.length < winnerCount &&
       !winners.find(({ id }) => id === user.id)
     ) {
-      if (banlist.includes(user.id)) {
-        reaction.remove();
-        return;
-      }
+      if (!userIsBanned(user.id, reaction)) {
+        winners.push(user);
 
-      winners.push(user);
-
-      if (winners.length === winnerCount) {
-        await notifyWinners({
-          discordUrl,
-          winners,
-          interaction,
-          projectName,
-          description,
-          message,
-          creatorUser,
-        });
-        subtractWl(client);
-        await removeWhitelist(message.id);
+        if (winners.length === winnerCount) {
+          await notifyWinners({
+            discordUrl,
+            winners,
+            interaction,
+            projectName,
+            description,
+            message,
+            creatorUser,
+          });
+          subtractWl(client);
+          await removeWhitelist(message.id);
+        }
       }
     }
   };
@@ -69,28 +77,30 @@ export const raffleEvents = ({
 } => {
   let complete = false;
   return {
-    onCollect: async (user, entries, message) => {
-      if (
-        user.id !== message.author.id &&
-        (maxEntries < 1 || entries.length < maxEntries) &&
-        !entries.find(({ id }) => id === user.id)
-      ) {
-        entries.push(user);
+    onCollect: async (user, entries, message, reaction) => {
+      if (!userIsBanned(user.id, reaction)) {
+        if (
+          user.id !== message.author.id &&
+          (maxEntries < 1 || entries.length < maxEntries) &&
+          !entries.find(({ id }) => id === user.id)
+        ) {
+          entries.push(user);
 
-        if (entries.length === maxEntries) {
-          const winners = selectWinners({ winnerCount, entries });
-          await notifyWinners({
-            discordUrl,
-            winners,
-            interaction,
-            projectName,
-            message,
-            description,
-            creatorUser,
-          });
-          complete = true;
-          subtractWl(client);
-          await removeWhitelist(message.id);
+          if (entries.length === maxEntries) {
+            const winners = selectWinners({ winnerCount, entries });
+            await notifyWinners({
+              discordUrl,
+              winners,
+              interaction,
+              projectName,
+              message,
+              description,
+              creatorUser,
+            });
+            complete = true;
+            subtractWl(client);
+            await removeWhitelist(message.id);
+          }
         }
       }
     },
