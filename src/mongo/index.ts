@@ -1,5 +1,5 @@
 import { Collection, MongoClient } from 'mongodb';
-import { CachedType, CollectionTypeMap, Drop } from './types';
+import { CachedType, CollectionTypeMap, Drop, Server } from './types';
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -64,4 +64,28 @@ export const addWhitelist = async (whitelist: Drop): Promise<Drop> => {
 export const removeWhitelist = async (_id: string) => {
   const collection = await getCollection('whitelist');
   await collection.deleteOne({ _id });
+};
+
+export const getServer = async (_id: string) => {
+  const collection = await getCollection('server');
+  return await collection.findOne({ _id });
+};
+
+export const upsertServer = async (server: Server) => {
+  const collection = await getCollection('server');
+
+  await collection.updateOne({ _id: server._id }, server, { upsert: true });
+};
+
+export const addToServer = async (
+  serverId: string,
+  userFragment: Record<string, string>
+) => {
+  const collection = await getCollection('server');
+
+  await collection.updateOne(
+    { _id: serverId },
+    { $set: userFragment },
+    { upsert: true }
+  );
 };

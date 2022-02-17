@@ -1,5 +1,5 @@
 import { Client, TextBasedChannel, User } from 'discord.js';
-import { notifyWinners, selectWinners } from '.';
+import { log, notifyWinners, selectWinners } from '.';
 import { getActiveWhitelists, removeWhitelist } from '../mongo';
 import { applyMessageEvents, fcfsOnCollect, raffleEvents } from './events';
 
@@ -23,7 +23,7 @@ export const setStatusOngoing = (client: Client) =>
     status: dropCount <= 0 ? 'idle' : 'online',
     activities: [
       {
-        name: `${dropCount} WL opportunit${dropCount === 1 ? 'y' : 'ies'}`,
+        name: `${dropCount} opportunit${dropCount === 1 ? 'y' : 'ies'}`,
         type: 'WATCHING',
       },
     ],
@@ -81,17 +81,16 @@ export const setupActiveWhitelists = async (client: Client) => {
     const durationMs = whitelist.endTime - Date.now();
 
     if (durationMs <= 0 || users.length >= maxEntries) {
-      // log('Overdue Drop', whitelist);
+      log('Overdue Drop', whitelist);
       if (whitelist.dropType === 'raffle') {
-        const winners = selectWinners({
-          winnerCount: whitelist.winnerCount,
-          entries: users,
-        });
         await notifyWinners({
           ...whitelist,
           message,
-          winners,
           creatorUser: creatorUser,
+          winners: selectWinners({
+            winnerCount: whitelist.winnerCount,
+            entries: users,
+          }),
         });
       } else if (whitelist.dropType === 'FCFS') {
         await notifyWinners({

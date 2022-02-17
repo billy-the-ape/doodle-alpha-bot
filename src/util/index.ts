@@ -79,11 +79,15 @@ export const getBaseDrop = (
 
 export const editInteractionReply = async (
   interaction?: BaseCommandInteraction,
-  options?: string | MessagePayload | WebhookEditMessageOptions
+  options?: string | MessagePayload | WebhookEditMessageOptions,
+  warning = false
 ) => {
+  if (warning && typeof options === 'string') {
+    options = `\`\`\`fix\n${options}\n\`\`\``;
+  }
   try {
     await interaction?.editReply(options!);
   } catch (e) {
-    console.error('Error: ', e);
+    console.error('Error (editInteractionReply): ', e);
   }
 };

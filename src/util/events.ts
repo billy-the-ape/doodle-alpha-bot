@@ -28,6 +28,7 @@ const userIsBanned = (userId: string, reaction: MessageReaction) => {
 
 export const fcfsOnCollect =
   ({
+    emoji,
     winnerCount,
     discordUrl,
     interaction,
@@ -46,6 +47,7 @@ export const fcfsOnCollect =
 
         if (winners.length === winnerCount) {
           await notifyWinners({
+            emoji,
             discordUrl,
             winners,
             interaction,
@@ -61,6 +63,7 @@ export const fcfsOnCollect =
   };
 
 export const raffleEvents = ({
+  emoji,
   client,
   interaction,
   creatorUser,
@@ -87,6 +90,7 @@ export const raffleEvents = ({
             const winners = selectWinners({ winnerCount, entries });
             await notifyWinners({
               discordUrl,
+              emoji,
               winners,
               interaction,
               projectName,
@@ -104,6 +108,7 @@ export const raffleEvents = ({
       if (!complete) {
         const winners = selectWinners({ winnerCount, entries });
         await notifyWinners({
+          emoji,
           discordUrl,
           winners,
           interaction,
@@ -182,7 +187,7 @@ export const applyMessageEvents = async ({
 
   await editInteractionReply(
     interaction,
-    `${projectName}: ${dropType} WL drop created.`
+    `${projectName}: ${dropType} drop created.`
   );
 };
 
@@ -206,7 +211,8 @@ export const createDropMessage = async ({
     console.error('No channel found ' + interaction.channelId);
     await editInteractionReply(
       interaction,
-      'An error occurred, invalid channel.'
+      'An error occurred, invalid channel.',
+      true
     );
     return false;
   }
@@ -220,7 +226,8 @@ export const createDropMessage = async ({
       await message.delete();
       await editInteractionReply(
         interaction,
-        `**Invalid custom emoji - WL Cancelled**\n\nThe bot cannot use ${emoji} because it is probably from a server the bot is not in. To be safe, only use standard emojis or custome ones from the current server.`
+        `**Invalid custom emoji - Drop Cancelled**\n\nThe bot cannot use ${emoji} because it is probably from a server the bot is not in. To be safe, only use standard emojis or custome ones from the current server.`,
+        true
       );
       return false;
     } else {

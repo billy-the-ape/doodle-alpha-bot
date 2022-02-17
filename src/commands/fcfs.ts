@@ -23,7 +23,7 @@ export const Fcfs: Command = {
     {
       type: Constants.ApplicationCommandOptionTypes.STRING,
       name: 'description',
-      description: 'Additional info about the WL drop, optional.',
+      description: 'Additional info about the project or drop, optional.',
       required: false,
     },
     {

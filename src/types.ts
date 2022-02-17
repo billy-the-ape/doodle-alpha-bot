@@ -47,13 +47,21 @@ export type ApplyMessageEventsProps = {
 export type DropTypes = 'FCFS' | 'raffle';
 
 export type NotifyWinnersProps = {
+  emoji: string;
   message: Message<boolean>;
-  discordUrl?: string;
   winners: User[];
-  interaction?: BaseCommandInteraction<CacheType>;
   projectName: string;
-  sendDm?: boolean;
   creatorUser: User;
+
+  //optional
+  interaction?: BaseCommandInteraction<CacheType>;
+  sendDm?: boolean;
+  discordUrl?: string;
+};
+
+export type WinnerData = {
+  username: string;
+  wallet: string;
 };
 
 export type SelectWinnersProps = {
@@ -94,6 +102,7 @@ export type HandleMessageReactionsProps = {
 };
 
 export type MessageEventsProps = {
+  emoji: string;
   client: Client;
   interaction?: BaseCommandInteraction;
   winnerCount: number;

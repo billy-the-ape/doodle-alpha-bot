@@ -1,13 +1,16 @@
 import { MessageEmbed, User } from 'discord.js';
 import { editInteractionReply, NONE_MESSAGE } from '.';
+import { getServer } from '../mongo';
 import {
   CreateEmbedProps,
   NotifyWinnersProps,
   SelectWinnersProps,
+  WinnerData,
 } from '../types';
 import { generateCsv } from './fs';
 
 export const notifyWinners = async ({
+  emoji,
   message,
   discordUrl,
   winners,
@@ -20,16 +23,22 @@ export const notifyWinners = async ({
     ? `\n\n**Join discord: <${discordUrl}>**`
     : '';
 
-  // Message for creator of WL to easily copy all the discord names with #
+  const winnerData = await hydrateWinnerWallets({
+    winners,
+    serverId: message.guildId!,
+  });
+
+  console.log({ winnerData });
+
+  // Message to become CSV data to DM to creator
   let winnersMessage =
-    winners.length === 0
+    winnerData.length === 0
       ? NONE_MESSAGE
-      : winners.reduce(
-          (acc, { username, discriminator }) =>
-            `${acc}\n${username}#${discriminator}`,
+      : winnerData.reduce(
+          (acc, { username, wallet }) => `${acc}\n"${username}","${wallet}"`,
           ''
         );
-  winnersMessage = `${projectName} Drop Winners${winnersMessage}`;
+  winnersMessage = `"${projectName} Drop Winners","Wallet"${winnersMessage}`;
 
   // Message to ping users
   const publicWinnersMessage =
@@ -43,7 +52,7 @@ export const notifyWinners = async ({
   const winnerReply = await message.reply(
     `**${projectName} whitelist completed**\n${
       publicWinnersMessage + discordMessage
-    }\n\n🎉 _Congratulations!_ 🎉`
+    }\n\n${emoji} _Congratulations!_ ${emoji}`
   );
   winnerReply.suppressEmbeds(true);
 
@@ -72,13 +81,28 @@ export const notifyWinners = async ({
     } catch (e) {
       await editInteractionReply(
         interaction,
-        "Attempted to DM you winners, but I couldn't.\n" + winnersMessage
+        "Attempted to DM you winners, but I couldn't.\n" + winnersMessage,
+        true
       );
-      console.error('Error', e);
+      console.error('Error (noftifyWinners)', e);
     }
   } else {
     await editInteractionReply(interaction, winnersMessage);
   }
+};
+
+export const hydrateWinnerWallets = async ({
+  winners,
+  serverId,
+}: {
+  winners: User[];
+  serverId: string;
+}): Promise<WinnerData[]> => {
+  const memberAddresses = await getServer(serverId);
+  return winners.map(({ id, username, discriminator }) => ({
+    username: `${username}#${discriminator}`,
+    wallet: memberAddresses?.[id] ?? '',
+  }));
 };
 
 export const selectWinners = ({ winnerCount, entries }: SelectWinnersProps) => {
@@ -87,15 +111,15 @@ export const selectWinners = ({ winnerCount, entries }: SelectWinnersProps) => {
   }
 
   const arr = [...entries];
-  const result: User[] = [];
+  const winners: User[] = [];
 
-  while (result.length < winnerCount) {
+  while (winners.length < winnerCount) {
     const random = Math.floor(Math.random() * arr.length);
 
-    result.push(...arr.splice(random, 1));
+    winners.push(...arr.splice(random, 1));
   }
 
-  return result;
+  return winners;
 };
 
 export const createEmbed = ({

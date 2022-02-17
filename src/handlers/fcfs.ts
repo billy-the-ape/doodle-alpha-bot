@@ -56,7 +56,7 @@ export const run = async (
     await addWhitelist({ ...drop, _id });
   } catch (error: any) {
     subtractDrop(client);
-    console.error('Error: ', { error, drop });
+    console.error('Error (wl-fcfs): ', { error, drop });
     await editInteractionReply(
       interaction,
       `An unexpected error occurred: ${error.message}`

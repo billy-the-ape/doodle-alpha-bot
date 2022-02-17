@@ -34,6 +34,12 @@ export type Drop = BaseDrop & {
   _id: string; // MessageId required
 };
 
+export type Server = {
+  _id: string;
+  [key: string]: string;
+};
+
 export type CollectionTypeMap = {
   whitelist: Drop;
+  server: Server;
 };

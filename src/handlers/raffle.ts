@@ -61,7 +61,7 @@ export const run = async (
 
     await addWhitelist({ ...drop, _id });
   } catch (error: any) {
-    console.error('Error: ', { error, drop });
+    console.error('Error (wl-raffle): ', { error, drop });
     await editInteractionReply(
       interaction,
       `An unexpected error occurred: ${error.message}`
