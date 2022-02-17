@@ -32,7 +32,9 @@ export const setStatusOngoing = (client: Client) =>
 export const setupActiveWhitelists = async (client: Client) => {
   const whitelists = await getActiveWhitelists();
 
-  console.log(`${whitelists.length} existing whitelists found. Loading...`);
+  console.log(
+    `doodle-alpha-bot: ${whitelists.length} existing whitelists found. Loading...`
+  );
 
   whitelists.forEach(async (whitelist) => {
     const creatorUser = await client.users.fetch(whitelist.userId);
@@ -129,5 +131,5 @@ export const setupActiveWhitelists = async (client: Client) => {
     }
   });
 
-  console.log('Whitelists loaded.');
+  console.log('doodle-alpha-bot: Whitelists loaded.');
 };

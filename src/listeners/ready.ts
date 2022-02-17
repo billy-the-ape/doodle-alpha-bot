@@ -12,15 +12,15 @@ export default (client: Client): void => {
     const guild = client.guilds.cache.get(guildId ?? '');
 
     if (guild) {
-      console.log('doodle-alpha-bot registering guild commands');
+      console.log('doodle-alpha-bot: registering guild commands');
       await guild.commands.set(commands);
     } else {
-      console.log('doodle-alpha-bot registering global commands');
+      console.log('doodle-alpha-bot: registering global commands');
       await client.application.commands.set(commands);
     }
 
     await setupActiveWhitelists(client);
 
-    console.log(`${client.user.username} is online`);
+    console.log(`doodle-alpha-bot: ${client.user.username} is online`);
   });
 };
