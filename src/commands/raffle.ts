@@ -50,6 +50,12 @@ export const Raffle: Command = {
       description: 'Emoji reaction to use for entries, optional.',
       required: false,
     },
+    {
+      type: Constants.ApplicationCommandOptionTypes.STRING,
+      name: 'image-url',
+      description: 'Image url for embed, optional.',
+      required: false,
+    },
   ],
   run,
 };

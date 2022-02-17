@@ -1,5 +1,5 @@
 import { BaseDrop } from '@/mongo/types';
-import { BaseCommandInteraction, Client } from 'discord.js';
+import { BaseCommandInteraction, Client, GuildMember } from 'discord.js';
 import { addWhitelist } from '../mongo';
 import {
   addDrop,
@@ -29,6 +29,7 @@ export const run = async (
 
     const embed = createEmbed({
       ...drop,
+      member: interaction.member as GuildMember,
       user: interaction.user,
       footerText: 'Good luck!',
     });

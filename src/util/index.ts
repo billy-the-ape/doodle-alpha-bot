@@ -43,6 +43,9 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
   const { value: emojiRaw } = interaction.options.get('emoji') ?? {
     value: '🎉',
   };
+  const { value: imageUrl } = interaction.options.get('image-url') ?? {
+    value: '',
+  };
 
   return {
     winnerCount: Number(userCountRaw),
@@ -52,6 +55,7 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
     maxEntries: Number(maxEntriesRaw),
     durationMs: Number(durationHours) * 60 * 60 * 1000, // hours to ms
     emoji: String(emojiRaw),
+    imageUrl: String(imageUrl),
   };
 };
 

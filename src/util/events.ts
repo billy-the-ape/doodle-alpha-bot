@@ -32,7 +32,6 @@ export const fcfsOnCollect =
     discordUrl,
     interaction,
     projectName,
-    description,
     client,
     creatorUser,
   }: MessageEventsProps): OnCollectHandler =>
@@ -51,7 +50,6 @@ export const fcfsOnCollect =
             winners,
             interaction,
             projectName,
-            description,
             message,
             creatorUser,
           });
@@ -69,7 +67,6 @@ export const raffleEvents = ({
   discordUrl,
   winnerCount,
   projectName,
-  description,
   maxEntries = 0,
 }: MessageEventsProps): {
   onCollect: OnCollectHandler;
@@ -94,7 +91,6 @@ export const raffleEvents = ({
               interaction,
               projectName,
               message,
-              description,
               creatorUser,
             });
             complete = true;
@@ -113,7 +109,6 @@ export const raffleEvents = ({
           interaction,
           projectName,
           message,
-          description,
           creatorUser,
         });
         subtractDrop(client);

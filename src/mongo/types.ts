@@ -16,6 +16,7 @@ export type BaseDrop = {
   dropType: DropTypes;
   winnerCount: number;
   projectName: string;
+  imageUrl: string;
   durationMs: number;
   startTime: number;
   endTime: number;

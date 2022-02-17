@@ -14,7 +14,6 @@ export const notifyWinners = async ({
   interaction,
   creatorUser,
   projectName,
-  description,
   sendDm = true,
 }: NotifyWinnersProps) => {
   const discordMessage = discordUrl
@@ -41,11 +40,9 @@ export const notifyWinners = async ({
           '\n🏆 Winners 🏆\n'
         );
 
-  const desc = description ? `\n\n${description}` : '';
-
   const winnerReply = await message.reply(
     `**${projectName} whitelist completed**\n${
-      publicWinnersMessage + desc + discordMessage
+      publicWinnersMessage + discordMessage
     }\n\n🎉 _Congratulations!_ 🎉`
   );
   winnerReply.suppressEmbeds(true);
@@ -105,17 +102,24 @@ export const createEmbed = ({
   winnerCount,
   dropType,
   projectName,
+  member,
   user,
   description,
   timeStamp,
   footerText,
   emoji,
+  imageUrl,
 }: CreateEmbedProps) =>
   new MessageEmbed({
     title: `__${projectName}__ whitelist opportunity: ${winnerCount} spot${
       winnerCount === 1 ? '' : 's'
     }, ${dropType}`,
-    author: { name: user.username, iconURL: user.displayAvatarURL() },
+    author: {
+      name: member.displayName,
+      iconURL: user.displayAvatarURL(),
+    },
     description: `${description ?? ''}\n\n**React with ${emoji} to enter**`,
     footer: { text: footerText },
-  }).setTimestamp(timeStamp);
+  })
+    .setTimestamp(timeStamp)
+    .setImage(imageUrl);

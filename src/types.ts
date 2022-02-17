@@ -3,6 +3,7 @@ import {
   CacheType,
   ChatInputApplicationCommandData,
   Client,
+  GuildMember,
   Message,
   MessageEmbed,
   MessageReaction,
@@ -51,7 +52,6 @@ export type NotifyWinnersProps = {
   winners: User[];
   interaction?: BaseCommandInteraction<CacheType>;
   projectName: string;
-  description?: string;
   sendDm?: boolean;
   creatorUser: User;
 };
@@ -65,9 +65,11 @@ export type CreateEmbedProps = {
   winnerCount: number | string;
   dropType: DropTypes;
   projectName: string;
+  member: GuildMember;
   user: User;
   footerText: string;
   emoji: string;
+  imageUrl: string;
 
   // Optional
   description?: string;
@@ -98,6 +100,5 @@ export type MessageEventsProps = {
   projectName: string;
   discordUrl?: string;
   maxEntries?: number;
-  description?: string;
   creatorUser: User;
 };
