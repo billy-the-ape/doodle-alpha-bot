@@ -50,7 +50,6 @@ export const fcfsOnCollect =
             emoji,
             discordUrl,
             winners,
-            interaction,
             projectName,
             message,
             creatorUser,
@@ -65,7 +64,6 @@ export const fcfsOnCollect =
 export const raffleEvents = ({
   emoji,
   client,
-  interaction,
   creatorUser,
   discordUrl,
   winnerCount,
@@ -92,7 +90,6 @@ export const raffleEvents = ({
               discordUrl,
               emoji,
               winners,
-              interaction,
               projectName,
               message,
               creatorUser,
@@ -111,7 +108,6 @@ export const raffleEvents = ({
           emoji,
           discordUrl,
           winners,
-          interaction,
           projectName,
           message,
           creatorUser,
@@ -184,11 +180,6 @@ export const applyMessageEvents = async ({
     const index = entries.findIndex(({ id }) => id === user.id);
     entries.splice(index, 1);
   });
-
-  await editInteractionReply(
-    interaction,
-    `${projectName}: ${dropType} drop created.`
-  );
 };
 
 export const createDropMessage = async ({
@@ -248,6 +239,9 @@ export const createDropMessage = async ({
     onCollect,
     onEnd,
   });
+
+  // Message sent, get rid of the ephemeral
+  await interaction?.deleteReply();
 
   return message.id;
 };

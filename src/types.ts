@@ -1,6 +1,5 @@
 import {
   BaseCommandInteraction,
-  CacheType,
   ChatInputApplicationCommandData,
   Client,
   GuildMember,
@@ -54,7 +53,6 @@ export type NotifyWinnersProps = {
   creatorUser: User;
 
   //optional
-  interaction?: BaseCommandInteraction<CacheType>;
   sendDm?: boolean;
   discordUrl?: string;
 };

@@ -1,5 +1,5 @@
 import { MessageEmbed, User } from 'discord.js';
-import { editInteractionReply, NONE_MESSAGE } from '.';
+import { NONE_MESSAGE } from '.';
 import { getServer } from '../mongo';
 import {
   CreateEmbedProps,
@@ -14,7 +14,6 @@ export const notifyWinners = async ({
   message,
   discordUrl,
   winners,
-  interaction,
   creatorUser,
   projectName,
   sendDm = true,
@@ -67,10 +66,6 @@ export const notifyWinners = async ({
   });
 
   if (sendDm) {
-    await editInteractionReply(
-      interaction,
-      `${projectName}: ${winners.length} winners selected`
-    );
     try {
       const csv = await generateCsv(projectName, winnersMessage);
       const dm = await creatorUser.createDM(true);
@@ -79,15 +74,8 @@ export const notifyWinners = async ({
         files: [csv],
       });
     } catch (e) {
-      await editInteractionReply(
-        interaction,
-        "Attempted to DM you winners, but I couldn't.\n" + winnersMessage,
-        true
-      );
       console.error('Error (noftifyWinners)', e);
     }
-  } else {
-    await editInteractionReply(interaction, winnersMessage);
   }
 };
 
@@ -135,9 +123,9 @@ export const createEmbed = ({
   imageUrl,
 }: CreateEmbedProps) =>
   new MessageEmbed({
-    title: `__${projectName}__ whitelist opportunity: ${winnerCount} spot${
+    title: `__${projectName} - ${winnerCount} spot${
       winnerCount === 1 ? '' : 's'
-    }, ${dropType}`,
+    } - ${dropType}__`,
     author: {
       name: member.displayName,
       iconURL: user.displayAvatarURL(),
