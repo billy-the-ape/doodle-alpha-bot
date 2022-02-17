@@ -11,24 +11,28 @@ export type CachedType = {
   promise: Promise<ConnType> | null;
 };
 
-export type Whitelist = {
-  _id: string; // MessageId
-  endTime: number;
+export type BaseDrop = {
+  emoji: string;
   dropType: DropTypes;
   winnerCount: number;
   projectName: string;
+  durationMs: number;
+  startTime: number;
+  endTime: number;
+  maxEntries: number;
   guildId: string;
   channelId: string;
-  interactionId: string;
   userId: string;
-  emoji: string;
 
   // optional
   discordUrl?: string;
-  maxEntries?: number;
   description?: string;
 };
 
+export type Drop = BaseDrop & {
+  _id: string; // MessageId required
+};
+
 export type CollectionTypeMap = {
-  whitelist: Whitelist;
+  whitelist: Drop;
 };

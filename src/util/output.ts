@@ -30,7 +30,7 @@ export const notifyWinners = async ({
             `${acc}\n${username}#${discriminator}`,
           ''
         );
-  winnersMessage = `${projectName} Whitelist Winners${winnersMessage}`;
+  winnersMessage = `${projectName} Drop Winners${winnersMessage}`;
 
   // Message to ping users
   const publicWinnersMessage =

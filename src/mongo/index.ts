@@ -1,5 +1,5 @@
 import { Collection, MongoClient } from 'mongodb';
-import { CachedType, CollectionTypeMap, Whitelist } from './types';
+import { CachedType, CollectionTypeMap, Drop } from './types';
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -55,9 +55,10 @@ export const getActiveWhitelists = async () => {
   return await collection.find().toArray();
 };
 
-export const addWhitelist = async (whitelist: Whitelist) => {
+export const addWhitelist = async (whitelist: Drop): Promise<Drop> => {
   const collection = await getCollection('whitelist');
   await collection.insertOne(whitelist);
+  return whitelist;
 };
 
 export const removeWhitelist = async (_id: string) => {

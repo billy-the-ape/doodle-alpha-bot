@@ -3,32 +3,31 @@ import { notifyWinners, selectWinners } from '.';
 import { getActiveWhitelists, removeWhitelist } from '../mongo';
 import { applyMessageEvents, fcfsOnCollect, raffleEvents } from './events';
 
-let wlCount = 0;
+const MIN_MAX_ENTRIES = 99999;
+let dropCount = 0;
 
-export const addWl = (client: Client) => {
-  wlCount++;
+export const addDrop = (client: Client) => {
+  dropCount++;
 
   setStatusOngoing(client);
 };
 
-export const subtractWl = (client: Client) => {
-  wlCount--;
+export const subtractDrop = (client: Client) => {
+  dropCount--;
 
   setStatusOngoing(client);
 };
 
 export const setStatusOngoing = (client: Client) =>
   client.user?.setPresence({
-    status: wlCount <= 0 ? 'idle' : 'online',
+    status: dropCount <= 0 ? 'idle' : 'online',
     activities: [
       {
-        name: `${wlCount} WL opportunit${wlCount === 1 ? 'y' : 'ies'}`,
+        name: `${dropCount} WL opportunit${dropCount === 1 ? 'y' : 'ies'}`,
         type: 'WATCHING',
       },
     ],
   });
-
-const MAX_MAX_ENTRIES = 99999;
 
 export const setupActiveWhitelists = async (client: Client) => {
   const whitelists = await getActiveWhitelists();
@@ -54,15 +53,15 @@ export const setupActiveWhitelists = async (client: Client) => {
       await removeWhitelist(whitelist._id);
       return;
     }
-    wlCount++;
+    dropCount++;
 
     // Get users who have reacted
     let users: User[] = [];
 
     const maxEntries =
       (whitelist.maxEntries ?? 0) <= 0
-        ? MAX_MAX_ENTRIES
-        : whitelist.maxEntries ?? MAX_MAX_ENTRIES;
+        ? MIN_MAX_ENTRIES
+        : whitelist.maxEntries ?? MIN_MAX_ENTRIES;
     const reactionUsersRaw = message.reactions.cache.get(
       whitelist.emoji
     )?.users;
@@ -82,7 +81,7 @@ export const setupActiveWhitelists = async (client: Client) => {
     const durationMs = whitelist.endTime - Date.now();
 
     if (durationMs <= 0 || users.length >= maxEntries) {
-      // log('Overdue Whitelist', whitelist);
+      // log('Overdue Drop', whitelist);
       if (whitelist.dropType === 'raffle') {
         const winners = selectWinners({
           winnerCount: whitelist.winnerCount,
@@ -104,7 +103,7 @@ export const setupActiveWhitelists = async (client: Client) => {
       }
       await removeWhitelist(whitelist._id);
     } else {
-      // log('Active Whitelist', whitelist);
+      // log('Active Drop', whitelist);
       const events =
         whitelist.dropType === 'raffle'
           ? raffleEvents({

@@ -1,14 +1,16 @@
+import { BaseDrop, Drop } from '@/mongo/types';
 import {
   BaseCommandInteraction,
   MessagePayload,
   WebhookEditMessageOptions,
 } from 'discord.js';
-import { addWl, subtractWl } from './setup';
+import { DropTypes } from '../types';
+import { addDrop, subtractDrop } from './setup';
 
 export * from './constants';
-export { fcfsOnCollect, handleMessageReactions, raffleEvents } from './events';
+export { createDropMessage, fcfsOnCollect, raffleEvents } from './events';
 export { createEmbed, notifyWinners, selectWinners } from './output';
-export { subtractWl, addWl };
+export { subtractDrop, addDrop };
 
 export const ensureDiscordUrl = (discordUrl: string) => {
   if (discordUrl.startsWith('discord' || discordUrl.startsWith('www')))
@@ -32,7 +34,7 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
   const { value: descriptionRaw } = interaction.options.get('description') ?? {
     value: '',
   };
-  const { value: durationRaw } = interaction.options.get('duration-hrs') ?? {
+  const { value: durationHours } = interaction.options.get('duration-hrs') ?? {
     value: 1,
   };
   const { value: maxEntriesRaw } = interaction.options.get('max-entries') ?? {
@@ -48,8 +50,26 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
     description: String(descriptionRaw),
     discordUrl: ensureDiscordUrl(String(discordUrlRaw)),
     maxEntries: Number(maxEntriesRaw),
-    durationMs: Number(durationRaw) * 60 * 60 * 1000,
+    durationMs: Number(durationHours) * 60 * 60 * 1000, // hours to ms
     emoji: String(emojiRaw),
+  };
+};
+
+export const getBaseDrop = (
+  interaction: BaseCommandInteraction,
+  overrides: Partial<Drop> & { dropType: DropTypes }
+): BaseDrop => {
+  const params = getParameters(interaction);
+  const startTime = Date.now();
+
+  return {
+    ...params,
+    ...overrides,
+    startTime,
+    userId: interaction.user.id,
+    guildId: interaction.guildId!,
+    channelId: interaction.channelId,
+    endTime: startTime + params.durationMs,
   };
 };
 

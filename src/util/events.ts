@@ -9,7 +9,7 @@ import {
   OnEndHandler,
 } from '../types';
 import { DEFAULT_DURATION } from './constants';
-import { subtractWl } from './setup';
+import { subtractDrop } from './setup';
 
 let banlist: string[];
 
@@ -55,7 +55,7 @@ export const fcfsOnCollect =
             message,
             creatorUser,
           });
-          subtractWl(client);
+          subtractDrop(client);
           await removeWhitelist(message.id);
         }
       }
@@ -98,7 +98,7 @@ export const raffleEvents = ({
               creatorUser,
             });
             complete = true;
-            subtractWl(client);
+            subtractDrop(client);
             await removeWhitelist(message.id);
           }
         }
@@ -116,7 +116,7 @@ export const raffleEvents = ({
           description,
           creatorUser,
         });
-        subtractWl(client);
+        subtractDrop(client);
         await removeWhitelist(message.id);
       }
     },
@@ -157,7 +157,7 @@ export const applyMessageEvents = async ({
   endEarlyCollector.on('collect', async ({ emoji }, user) => {
     log('onCancelCollect', { emoji: emoji.name, userId: user.id });
     if (user.id === creatorUser.id) {
-      subtractWl(client);
+      subtractDrop(client);
       await removeWhitelist(message.id);
       await message.delete();
       await editInteractionReply(
@@ -191,7 +191,7 @@ export const applyMessageEvents = async ({
   );
 };
 
-export const handleMessageReactions = async ({
+export const createDropMessage = async ({
   interaction,
   embed,
   projectName,
@@ -202,7 +202,7 @@ export const handleMessageReactions = async ({
   onCollect,
   onEnd,
   emoji,
-}: HandleMessageReactionsProps) => {
+}: HandleMessageReactionsProps): Promise<string | false> => {
   const channel = (await client.channels.fetch(
     interaction.channelId
   )) as TextBasedChannel;

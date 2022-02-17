@@ -1,80 +1,64 @@
+import { BaseDrop } from '@/mongo/types';
 import { BaseCommandInteraction, Client } from 'discord.js';
 import { addWhitelist } from '../mongo';
 import {
-  addWl,
+  addDrop,
+  createDropMessage,
   createEmbed,
   DEFAULT_DURATION,
   editInteractionReply,
   fcfsOnCollect,
-  getParameters,
-  handleMessageReactions,
-  subtractWl,
+  getBaseDrop,
+  subtractDrop,
 } from '../util';
 
 export const run = async (
   client: Client,
   interaction: BaseCommandInteraction
 ) => {
+  let drop: BaseDrop | null = null;
   try {
-    addWl(client);
+    addDrop(client);
 
     const dropType = 'FCFS';
-    const { winnerCount, projectName, discordUrl, emoji, description } =
-      getParameters(interaction);
 
-    const embed = createEmbed({
-      projectName,
+    drop = getBaseDrop(interaction, {
       dropType,
-      winnerCount,
-      user: interaction.user,
-      footerText: 'Good luck!',
-      emoji,
+      endTime: Date.now() + DEFAULT_DURATION,
     });
 
-    const messageId = await handleMessageReactions({
-      projectName,
-      dropType,
+    const embed = createEmbed({
+      ...drop,
+      user: interaction.user,
+      footerText: 'Good luck!',
+    });
+
+    const _id = await createDropMessage({
+      ...drop,
       embed,
       client,
       interaction,
-      maxEntries: winnerCount,
-      emoji,
+      maxEntries: drop.winnerCount,
       onCollect: fcfsOnCollect({
-        winnerCount,
-        discordUrl,
-        interaction,
-        projectName,
-        description,
+        ...drop,
         client,
+        interaction,
         creatorUser: interaction.user,
       }),
     });
 
-    if (!messageId) {
-      subtractWl(client);
+    if (!_id) {
+      subtractDrop(client);
       return;
     }
 
-    await addWhitelist({
-      _id: String(messageId),
-      endTime: Date.now() + DEFAULT_DURATION,
-      projectName,
-      dropType,
-      winnerCount,
-      discordUrl,
-      description,
-      emoji,
-      userId: interaction.user.id,
-      guildId: interaction.guildId!,
-      channelId: interaction.channelId,
-      interactionId: interaction.id,
-    });
-  } catch (e: any) {
-    subtractWl(client);
-    console.error('Error: ', e);
+    await addWhitelist({ ...drop, _id });
+  } catch (error: any) {
+    subtractDrop(client);
+    console.error('Error: ', { error, drop });
     await editInteractionReply(
       interaction,
-      `An unexpected error occurred: ${e.message}`
+      `An unexpected error occurred: ${error.message}`
     );
   }
 };

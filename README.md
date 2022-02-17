@@ -1,5 +1,6 @@
 # doodle-alpha-bot
-Discord bot for running alpha whitelist FCFS or raffles
+
+Discord bot for running alpha whitelist drops FCFS or raffles
 
 ### Setup
 
