@@ -240,8 +240,5 @@ export const createDropMessage = async ({
     onEnd,
   });
 
-  // Message sent, get rid of the ephemeral
-  await interaction?.deleteReply();
-
   return message.id;
 };
