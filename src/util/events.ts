@@ -139,7 +139,9 @@ export const applyMessageEvents = async ({
   const collector = message.createReactionCollector({
     filter: (reaction) =>
       reaction.emoji.name === emoji ||
-      `<:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji, // Custom emoji
+      `<:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji || // Custom emoji
+      (!!reaction.emoji.animated &&
+        `<a:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji), // Animated emoji
     max: maxEntries === 0 ? undefined : 1 + maxEntries,
     time: durationMs,
   });
@@ -239,6 +241,11 @@ export const createDropMessage = async ({
     onCollect,
     onEnd,
   });
+
+  editInteractionReply(
+    interaction,
+    `${projectName} ${dropType} created successfully! ${emoji}`
+  );
 
   return message.id;
 };
