@@ -33,7 +33,6 @@ export const run = async (
       ...drop,
       timeStamp,
       member: interaction.member as GuildMember,
-      user: interaction.user,
       description:
         (drop.description ? `${drop.description}\n\n` : '') +
         timeMessage +

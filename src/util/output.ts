@@ -115,7 +115,6 @@ export const createEmbed = ({
   dropType,
   projectName,
   member,
-  user,
   description,
   timeStamp,
   footerText,
@@ -128,7 +127,7 @@ export const createEmbed = ({
     } - ${dropType}__`,
     author: {
       name: member.displayName,
-      iconURL: user.displayAvatarURL(),
+      iconURL: member.displayAvatarURL(),
     },
     description: `${description ?? ''}\n\n**React with ${emoji} to enter**`,
     footer: { text: footerText },

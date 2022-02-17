@@ -30,7 +30,6 @@ export const run = async (
     const embed = createEmbed({
       ...drop,
       member: interaction.member as GuildMember,
-      user: interaction.user,
       footerText: 'Good luck!',
     });
 

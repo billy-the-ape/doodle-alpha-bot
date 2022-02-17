@@ -72,7 +72,6 @@ export type CreateEmbedProps = {
   dropType: DropTypes;
   projectName: string;
   member: GuildMember;
-  user: User;
   footerText: string;
   emoji: string;
   imageUrl: string;
