@@ -274,6 +274,12 @@ export const createDropMessage = async ({
         true
       );
       return false;
+    } else if (e.message === 'Missing Permissions') {
+      await editInteractionReply(
+        interaction,
+        `**Missing Permissions**\n\nThe bot cannot pin because it is missing the pin permissions in this channel.`,
+        true
+      );
     } else {
       throw e;
     }
