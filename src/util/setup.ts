@@ -1,7 +1,16 @@
 import { Client, TextBasedChannel, User } from 'discord.js';
 import { log, notifyWinners, selectWinners } from '.';
-import { getActiveWhitelists, removeWhitelist } from '../mongo';
-import { applyMessageEvents, fcfsOnCollect, raffleEvents } from './events';
+import {
+  completeWhitelist,
+  getActiveWhitelists,
+  removeWhitelist,
+} from '../mongo';
+import {
+  applyMessageEvents,
+  fcfsOnCollect,
+  mapUser,
+  raffleEvents,
+} from './events';
 
 const MIN_MAX_ENTRIES = 99999;
 let dropCount = 0;
@@ -85,15 +94,21 @@ export const setupActiveWhitelists = async (client: Client) => {
     if (durationMs <= 0 || users.length >= maxEntries) {
       log('Overdue Drop', whitelist);
       if (whitelist.dropType === 'raffle') {
+        const winners = selectWinners({
+          winnerCount: whitelist.winnerCount,
+          entries: users,
+        });
         await notifyWinners({
           ...whitelist,
           message,
           creatorUser: creatorUser,
-          winners: selectWinners({
-            winnerCount: whitelist.winnerCount,
-            entries: users,
-          }),
+          winners,
         });
+        await completeWhitelist(
+          whitelist._id,
+          winners.map(mapUser),
+          users.map(mapUser)
+        );
       } else if (whitelist.dropType === 'FCFS') {
         await notifyWinners({
           ...whitelist,
@@ -101,8 +116,9 @@ export const setupActiveWhitelists = async (client: Client) => {
           winners: users,
           creatorUser,
         });
+        const usersToAdd = users.map(mapUser);
+        await completeWhitelist(whitelist._id, usersToAdd, usersToAdd);
       }
-      await removeWhitelist(whitelist._id);
     } else {
       // log('Active Drop', whitelist);
       const events =

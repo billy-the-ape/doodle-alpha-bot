@@ -52,7 +52,7 @@ export const run = async (
       return;
     }
 
-    await addWhitelist({ ...drop, _id });
+    await addWhitelist({ ...drop, _id, completed: false });
   } catch (error: any) {
     subtractDrop(client);
     console.error('Error (wl-fcfs): ', { error, drop });

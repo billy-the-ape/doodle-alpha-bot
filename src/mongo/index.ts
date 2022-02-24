@@ -1,5 +1,11 @@
 import { Collection, MongoClient } from 'mongodb';
-import { CachedType, CollectionTypeMap, Drop, Server } from './types';
+import {
+  CachedType,
+  CollectionTypeMap,
+  Drop,
+  Server,
+  StoredUser,
+} from './types';
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -52,11 +58,12 @@ const getCollection = async <TKey extends keyof CollectionTypeMap>(
 
 export const getActiveWhitelists = async () => {
   const collection = await getCollection('whitelist');
-  return await collection.find().toArray();
+  return await collection.find({ completed: false }).toArray();
 };
 
 export const addWhitelist = async (whitelist: Drop): Promise<Drop> => {
   const collection = await getCollection('whitelist');
+  whitelist.completed = false;
   await collection.insertOne(whitelist);
   return whitelist;
 };
@@ -64,6 +71,16 @@ export const addWhitelist = async (whitelist: Drop): Promise<Drop> => {
 export const removeWhitelist = async (_id: string) => {
   const collection = await getCollection('whitelist');
   await collection.deleteOne({ _id });
+};
+
+export const completeWhitelist = async (
+  _id: string,
+  winners: StoredUser[],
+  entries: StoredUser[]
+) => {
+  const collection = await getCollection('whitelist');
+  await collection.updateOne({ _id }, { completed: true, winners, entries });
+  // await collection.deleteOne({ _id });
 };
 
 export const getServer = async (_id: string) => {

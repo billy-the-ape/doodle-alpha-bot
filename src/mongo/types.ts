@@ -30,8 +30,20 @@ export type BaseDrop = {
   description?: string;
 };
 
+export type StoredUser = {
+  id: string;
+  name: string;
+};
+
 export type Drop = BaseDrop & {
   _id: string; // MessageId required
+  completed: boolean;
+};
+
+export type CompletedDrop = Drop & {
+  completed: true;
+  winners: StoredUser[];
+  entries: StoredUser[];
 };
 
 export type Server = {

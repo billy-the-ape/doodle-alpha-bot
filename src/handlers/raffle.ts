@@ -58,7 +58,7 @@ export const run = async (
       return;
     }
 
-    await addWhitelist({ ...drop, _id });
+    await addWhitelist({ ...drop, _id, completed: false });
   } catch (error: any) {
     console.error('Error (wl-raffle): ', { error, drop });
     await editInteractionReply(

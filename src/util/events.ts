@@ -1,6 +1,13 @@
+import { completeWhitelist, removeWhitelist } from '@/mongo';
 import { MessageReaction, TextBasedChannel, User } from 'discord.js';
-import { editInteractionReply, log, notifyWinners, selectWinners } from '.';
-import { removeWhitelist } from '../mongo';
+import {
+  DEFAULT_DURATION,
+  editInteractionReply,
+  log,
+  notifyWinners,
+  selectWinners,
+  subtractDrop,
+} from '.';
 import {
   ApplyMessageEventsProps,
   HandleMessageReactionsProps,
@@ -8,10 +15,13 @@ import {
   OnCollectHandler,
   OnEndHandler,
 } from '../types';
-import { DEFAULT_DURATION } from './constants';
-import { subtractDrop } from './setup';
 
 let banlist: string[];
+
+export const mapUser = ({ id, username, discriminator }: User) => ({
+  id,
+  name: `${username}#${discriminator}`,
+});
 
 const userIsBanned = (userId: string, reaction: MessageReaction) => {
   if (!banlist) {
@@ -31,7 +41,6 @@ export const fcfsOnCollect =
     emoji,
     winnerCount,
     discordUrl,
-    interaction,
     projectName,
     client,
     creatorUser,
@@ -46,6 +55,8 @@ export const fcfsOnCollect =
         winners.push(user);
 
         if (winners.length === winnerCount) {
+          const usersToStore = winners.map(mapUser);
+
           await notifyWinners({
             emoji,
             discordUrl,
@@ -55,8 +66,12 @@ export const fcfsOnCollect =
             creatorUser,
           });
           subtractDrop(client);
-          await removeWhitelist(message.id);
+          await completeWhitelist(message.id, usersToStore, usersToStore);
         }
+      } else {
+        try {
+          reaction.remove();
+        } catch {}
       }
     }
   };
@@ -96,7 +111,11 @@ export const raffleEvents = ({
             });
             complete = true;
             subtractDrop(client);
-            await removeWhitelist(message.id);
+            await completeWhitelist(
+              message.id,
+              winners.map(mapUser),
+              entries.map(mapUser)
+            );
           }
         }
       }
@@ -113,7 +132,11 @@ export const raffleEvents = ({
           creatorUser,
         });
         subtractDrop(client);
-        await removeWhitelist(message.id);
+        await completeWhitelist(
+          message.id,
+          winners.map(mapUser),
+          entries.map(mapUser)
+        );
       }
     },
   };
@@ -228,7 +251,7 @@ export const createDropMessage = async ({
     }
   }
 
-  applyMessageEvents({
+  await applyMessageEvents({
     message,
     emoji,
     maxEntries,
@@ -242,7 +265,7 @@ export const createDropMessage = async ({
     onEnd,
   });
 
-  editInteractionReply(
+  await editInteractionReply(
     interaction,
     `${projectName} ${dropType} created successfully! ${emoji}`
   );
