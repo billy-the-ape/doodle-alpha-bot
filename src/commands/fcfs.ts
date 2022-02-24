@@ -50,6 +50,12 @@ export const Fcfs: Command = {
       description: 'Require user to have submitted wallet to enter.',
       required: false,
     },
+    {
+      type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
+      name: 'pin',
+      description: 'Pin FCFS message, optional.',
+      required: false,
+    },
   ],
   run,
 };

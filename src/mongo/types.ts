@@ -25,6 +25,7 @@ export type BaseDrop = {
   channelId: string;
   userId: string;
   requireWallet: boolean;
+  pin: boolean;
 
   // optional
   discordUrl?: string;

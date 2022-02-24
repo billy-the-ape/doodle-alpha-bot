@@ -16,6 +16,7 @@ export const notifyWinners = async ({
   winners,
   creatorUser,
   projectName,
+  pin,
   sendDm = true,
 }: NotifyWinnersProps) => {
   try {
@@ -60,9 +61,13 @@ export const notifyWinners = async ({
         text: 'Ended',
       });
 
-    message.edit({
+    await message.edit({
       embeds: [message.embeds[0]],
     });
+
+    if (pin) {
+      await message.unpin();
+    }
 
     if (sendDm) {
       const csv = await generateCsv(projectName, winnersMessage);

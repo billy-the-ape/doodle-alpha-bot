@@ -59,7 +59,13 @@ export const Raffle: Command = {
     {
       type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
       name: 'require-wallet',
-      description: 'Require user to have submitted wallet to enter.',
+      description: 'Require user to have submitted wallet to enter, optional.',
+      required: false,
+    },
+    {
+      type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
+      name: 'pin',
+      description: 'Pin raffle message, optional.',
       required: false,
     },
   ],

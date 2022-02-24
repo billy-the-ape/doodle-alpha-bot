@@ -53,6 +53,7 @@ export type NotifyWinnersProps = {
   winners: User[];
   projectName: string;
   creatorUser: User;
+  pin: boolean;
 
   //optional
   sendDm?: boolean;
@@ -93,6 +94,7 @@ export type HandleMessageReactionsProps = {
   emoji: string;
   maxEntries: number;
   requireWallet: boolean;
+  pin: boolean;
 
   // Optional
   durationMs?: number;
@@ -111,4 +113,5 @@ export type MessageEventsProps = {
   discordUrl?: string;
   maxEntries?: number;
   creatorUser: User;
+  pin: boolean;
 };

@@ -51,6 +51,9 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
   ) ?? {
     value: false,
   };
+  const { value: pin } = interaction.options.get('pin') ?? {
+    value: false,
+  };
 
   return {
     winnerCount: Number(userCountRaw),
@@ -62,6 +65,7 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
     emoji: String(emojiRaw),
     imageUrl: String(imageUrl),
     requireWallet: Boolean(requireWallet),
+    pin: Boolean(pin),
   };
 };
 

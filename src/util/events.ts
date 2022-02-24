@@ -49,6 +49,7 @@ export const fcfsOnCollect =
     projectName,
     client,
     creatorUser,
+    pin,
   }: MessageEventsProps): OnCollectHandler =>
   async (user, winners, message, reaction) => {
     if (
@@ -69,6 +70,7 @@ export const fcfsOnCollect =
             projectName,
             message,
             creatorUser,
+            pin,
           });
           subtractDrop(client);
           await completeWhitelist(message.id, usersToStore, usersToStore);
@@ -84,6 +86,7 @@ export const raffleEvents = ({
   discordUrl,
   winnerCount,
   projectName,
+  pin,
   maxEntries = 0,
 }: MessageEventsProps): {
   onCollect: OnCollectHandler;
@@ -109,6 +112,7 @@ export const raffleEvents = ({
               projectName,
               message,
               creatorUser,
+              pin,
             });
             complete = true;
             subtractDrop(client);
@@ -131,6 +135,7 @@ export const raffleEvents = ({
           projectName,
           message,
           creatorUser,
+          pin,
         });
         subtractDrop(client);
         await completeWhitelist(
@@ -236,6 +241,7 @@ export const createDropMessage = async ({
   onEnd,
   emoji,
   requireWallet,
+  pin,
 }: HandleMessageReactionsProps): Promise<string | false> => {
   const channel = (await client.channels.fetch(
     interaction.channelId
@@ -255,6 +261,10 @@ export const createDropMessage = async ({
 
   try {
     await message.react(emoji);
+
+    if (pin) {
+      await message.pin();
+    }
   } catch (e: any) {
     if (e.message === 'Unknown Emoji') {
       await message.delete();
