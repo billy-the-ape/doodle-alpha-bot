@@ -28,9 +28,9 @@ const userIsBanned = (userId: string, reaction: MessageReaction) => {
     banlist = process.env.BANLIST ? String(process.env.BANLIST).split(',') : [];
   }
   if (banlist.includes(userId)) {
-    /* try {
+    try {
       reaction.remove();
-    } catch {} */
+    } catch {}
     return true;
   }
   return false;
