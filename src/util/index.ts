@@ -1,9 +1,9 @@
-import { BaseDrop, Drop } from '@/mongo/types';
 import {
   BaseCommandInteraction,
   MessagePayload,
   WebhookEditMessageOptions,
 } from 'discord.js';
+import { BaseDrop, Drop } from '../mongo/types';
 import { DropTypes } from '../types';
 import { addDrop, subtractDrop } from './setup';
 
@@ -46,6 +46,11 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
   const { value: imageUrl } = interaction.options.get('image-url') ?? {
     value: '',
   };
+  const { value: requireWallet } = interaction.options.get(
+    'require-wallet'
+  ) ?? {
+    value: false,
+  };
 
   return {
     winnerCount: Number(userCountRaw),
@@ -56,6 +61,7 @@ export const getParameters = (interaction: BaseCommandInteraction) => {
     durationMs: Number(durationHours) * 60 * 60 * 1000, // hours to ms
     emoji: String(emojiRaw),
     imageUrl: String(imageUrl),
+    requireWallet: Boolean(requireWallet),
   };
 };
 

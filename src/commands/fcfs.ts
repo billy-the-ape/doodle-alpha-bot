@@ -44,6 +44,12 @@ export const Fcfs: Command = {
       description: 'Image url for embed, optional.',
       required: false,
     },
+    {
+      type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
+      name: 'require-wallet',
+      description: 'Require user to have submitted wallet to enter.',
+      required: false,
+    },
   ],
   run,
 };

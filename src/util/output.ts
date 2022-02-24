@@ -18,64 +18,62 @@ export const notifyWinners = async ({
   projectName,
   sendDm = true,
 }: NotifyWinnersProps) => {
-  const discordMessage = discordUrl
-    ? `\n\n**Join discord: <${discordUrl}>**`
-    : '';
+  try {
+    const discordMessage = discordUrl
+      ? `\n\n**Join discord: <${discordUrl}>**`
+      : '';
 
-  const winnerData = await hydrateWinnerWallets({
-    winners,
-    serverId: message.guildId!,
-  });
-
-  console.log({ winnerData });
-
-  // Message to become CSV data to DM to creator
-  let winnersMessage =
-    winnerData.length === 0
-      ? NONE_MESSAGE
-      : winnerData.reduce(
-          (acc, { username, wallet }) => `${acc}\n"${username}","${wallet}"`,
-          ''
-        );
-  winnersMessage = `"${projectName} Drop Winners","Wallet"${winnersMessage}`;
-
-  // Message to ping users
-  const publicWinnersMessage =
-    winners.length === 0
-      ? NONE_MESSAGE
-      : winners.reduce(
-          (acc, user) => `${acc} ${user.toString()}`,
-          '\n🏆 Winners 🏆\n'
-        );
-
-  const winnerReply = await message.reply(
-    `**${projectName} whitelist completed**\n${
-      publicWinnersMessage + discordMessage
-    }\n\n${emoji} _Congratulations!_ ${emoji}`
-  );
-  winnerReply.suppressEmbeds(true);
-
-  message.embeds[0]
-    .setDescription(`Ended <t:${Math.round(Date.now() / 1000)}>`)
-    .setFooter({
-      text: 'Ended',
+    const winnerData = await hydrateWinnerWallets({
+      winners,
+      serverId: message.guildId!,
     });
 
-  message.edit({
-    embeds: [message.embeds[0]],
-  });
+    // Message to become CSV data to DM to creator
+    let winnersMessage =
+      winnerData.length === 0
+        ? NONE_MESSAGE
+        : winnerData.reduce(
+            (acc, { username, wallet }) => `${acc}\n"${username}","${wallet}"`,
+            ''
+          );
+    winnersMessage = `"${projectName} Drop Winners","Wallet"${winnersMessage}`;
 
-  if (sendDm) {
-    try {
+    // Message to ping users
+    const publicWinnersMessage =
+      winners.length === 0
+        ? NONE_MESSAGE
+        : winners.reduce(
+            (acc, user) => `${acc} ${user.toString()}`,
+            '\n🏆 Winners 🏆\n'
+          );
+
+    const winnerReply = await message.reply(
+      `**${projectName} whitelist completed**\n${
+        publicWinnersMessage + discordMessage
+      }\n\n${emoji} _Congratulations!_ ${emoji}`
+    );
+    winnerReply.suppressEmbeds(true);
+
+    message.embeds[0]
+      .setDescription(`Ended <t:${Math.round(Date.now() / 1000)}>`)
+      .setFooter({
+        text: 'Ended',
+      });
+
+    message.edit({
+      embeds: [message.embeds[0]],
+    });
+
+    if (sendDm) {
       const csv = await generateCsv(projectName, winnersMessage);
       const dm = await creatorUser.createDM(true);
       await dm.send({
         content: `\`${projectName}\` whitelist drop complete. \`${winners.length}\` winners selected. Full list attached below.`,
         files: [csv],
       });
-    } catch (e) {
-      console.error('Error (noftifyWinners)', e);
     }
+  } catch (e) {
+    console.error('Error (noftifyWinners)', e);
   }
 };
 
@@ -120,6 +118,7 @@ export const createEmbed = ({
   footerText,
   emoji,
   imageUrl,
+  requireWallet,
 }: CreateEmbedProps) =>
   new MessageEmbed({
     title: `__${projectName} - ${winnerCount} spot${
@@ -129,7 +128,11 @@ export const createEmbed = ({
       name: member.displayName,
       iconURL: member.displayAvatarURL(),
     },
-    description: `${description ?? ''}\n\n**React with ${emoji} to enter**`,
+    description: `${description ?? ''}${
+      requireWallet
+        ? '\n\n **YOUR WALLET MUST BE SUBMITTED USING `/wl-wallet` FOR THIS ONE!!**'
+        : ''
+    }\n\n**React with ${emoji} to enter**`,
     footer: { text: footerText },
   })
     .setTimestamp(timeStamp)

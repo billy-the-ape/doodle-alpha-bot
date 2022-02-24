@@ -42,7 +42,7 @@ export const setupActiveWhitelists = async (client: Client) => {
   const whitelists = await getActiveWhitelists();
 
   console.log(
-    `doodle-alpha-bot: ${whitelists.length} existing whitelists found. Loading...`
+    `doodle-alpha-bot: ${whitelists.length} active whitelists found. Loading...`
   );
 
   whitelists.forEach(async (whitelist) => {

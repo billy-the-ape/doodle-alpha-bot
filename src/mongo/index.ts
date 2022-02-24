@@ -79,19 +79,27 @@ export const completeWhitelist = async (
   entries: StoredUser[]
 ) => {
   const collection = await getCollection('whitelist');
-  await collection.updateOne({ _id }, { completed: true, winners, entries });
+  await collection.updateOne(
+    { _id },
+    { $set: { completed: true, winners, entries } }
+  );
   // await collection.deleteOne({ _id });
 };
 
-export const getServer = async (_id: string) => {
-  const collection = await getCollection('server');
-  return await collection.findOne({ _id });
+const serverCache: Server[] = [];
+
+export const getServerFromCache = (_id: string) => {
+  return serverCache.find((s) => s._id === _id);
 };
+export const getServer = async (_id: string) => {
+  const existing = serverCache.find((s) => s._id === _id);
+  if (existing) return existing;
 
-export const upsertServer = async (server: Server) => {
   const collection = await getCollection('server');
+  const result = await collection.findOne({ _id });
 
-  await collection.updateOne({ _id: server._id }, server, { upsert: true });
+  if (result) serverCache.push(result);
+  return result;
 };
 
 export const addToServer = async (
@@ -105,4 +113,14 @@ export const addToServer = async (
     { $set: userFragment },
     { upsert: true }
   );
+
+  const existing = serverCache.find((s) => s._id === serverId);
+
+  if (existing) {
+    Object.entries(userFragment).forEach(
+      ([userId, wallet]) => (existing[userId] = wallet)
+    );
+  } else {
+    serverCache.push({ _id: serverId, ...userFragment });
+  }
 };

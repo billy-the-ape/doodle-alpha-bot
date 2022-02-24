@@ -1,4 +1,3 @@
-import { completeWhitelist, removeWhitelist } from '@/mongo';
 import { MessageReaction, TextBasedChannel, User } from 'discord.js';
 import {
   DEFAULT_DURATION,
@@ -8,6 +7,12 @@ import {
   selectWinners,
   subtractDrop,
 } from '.';
+import {
+  completeWhitelist,
+  getServer,
+  getServerFromCache,
+  removeWhitelist,
+} from '../mongo';
 import {
   ApplyMessageEventsProps,
   HandleMessageReactionsProps,
@@ -29,7 +34,7 @@ const userIsBanned = (userId: string, reaction: MessageReaction) => {
   }
   if (banlist.includes(userId)) {
     try {
-      reaction.remove();
+      reaction.users.remove(userId);
     } catch {}
     return true;
   }
@@ -68,10 +73,6 @@ export const fcfsOnCollect =
           subtractDrop(client);
           await completeWhitelist(message.id, usersToStore, usersToStore);
         }
-      } else {
-        try {
-          reaction.remove();
-        } catch {}
       }
     }
   };
@@ -152,19 +153,35 @@ export const applyMessageEvents = async ({
   projectName,
   dropType,
   creatorUser,
+  requireWallet,
+  guildId,
   onCollect,
   onEnd,
   existingUsers = [],
 }: ApplyMessageEventsProps) => {
   const cancelEmoji = '❌';
   const entries: User[] = [...existingUsers];
+  if (requireWallet) {
+    await getServer(guildId);
+  }
 
   const collector = message.createReactionCollector({
-    filter: (reaction) =>
-      reaction.emoji.name === emoji ||
-      `<:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji || // Custom emoji
-      (!!reaction.emoji.animated &&
-        `<a:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji), // Animated emoji
+    filter: (reaction, user) => {
+      const wallets = getServerFromCache(guildId) ?? ({} as any);
+      const isEmoji =
+        reaction.emoji.name === emoji ||
+        `<:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji || // Custom emoji
+        (!!reaction.emoji.animated &&
+          `<a:${reaction.emoji.name}:${reaction.emoji.id}>` === emoji); // Animated emoji
+
+      const isWalletSubmitted = !requireWallet || !!wallets[user.id];
+
+      if (!isWalletSubmitted) {
+        reaction.users.remove(user);
+      }
+
+      return isEmoji && isWalletSubmitted;
+    },
     max: maxEntries === 0 ? undefined : 1 + maxEntries,
     time: durationMs,
   });
@@ -218,6 +235,7 @@ export const createDropMessage = async ({
   onCollect,
   onEnd,
   emoji,
+  requireWallet,
 }: HandleMessageReactionsProps): Promise<string | false> => {
   const channel = (await client.channels.fetch(
     interaction.channelId
@@ -261,6 +279,8 @@ export const createDropMessage = async ({
     client,
     projectName,
     dropType,
+    requireWallet,
+    guildId: interaction.guildId ?? '',
     onCollect,
     onEnd,
   });

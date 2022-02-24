@@ -34,6 +34,8 @@ export type ApplyMessageEventsProps = {
   projectName: string;
   dropType: DropTypes;
   creatorUser: User;
+  requireWallet: boolean;
+  guildId: string;
 
   existingUsers?: User[];
   interaction?: BaseCommandInteraction;
@@ -75,6 +77,7 @@ export type CreateEmbedProps = {
   footerText: string;
   emoji: string;
   imageUrl: string;
+  requireWallet: boolean;
 
   // Optional
   description?: string;
@@ -89,6 +92,7 @@ export type HandleMessageReactionsProps = {
   client: Client;
   emoji: string;
   maxEntries: number;
+  requireWallet: boolean;
 
   // Optional
   durationMs?: number;

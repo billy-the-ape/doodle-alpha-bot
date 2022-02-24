@@ -1,6 +1,6 @@
-import { BaseDrop } from '@/mongo/types';
 import { BaseCommandInteraction, Client, GuildMember } from 'discord.js';
 import { addWhitelist } from '../mongo';
+import { BaseDrop } from '../mongo/types';
 import {
   addDrop,
   createDropMessage,
